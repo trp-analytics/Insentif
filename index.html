@@ -3,43 +3,182 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Insentif 2026 - Live</title>
+<title>Dashboard Insentif - Auto Update</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,sans-serif}
-body{background:#b6c4dc;padding:20px}
-.container{max-width:1400px;margin:0 auto}
-.header{background:#023188;color:#fff;padding:15px 20px;border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
-.header h1{font-size:18px}
-.status{background:#1a5fc8;padding:5px 12px;border-radius:20px;font-size:12px}
-.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:15px 0}
-.kpi-card{background:#fff;border-radius:10px;padding:15px;border-top:3px solid}
-.kpi-label{font-size:11px;color:#7a94b0;text-transform:uppercase}
-.kpi-value{font-size:24px;font-weight:700;color:#1a2e45}
-.kpi-sub{font-size:10px;color:#7a94b0;margin-top:5px}
-.card{background:#fff;border-radius:10px;margin-bottom:15px;overflow:hidden}
-.card-header{padding:12px 15px;border-bottom:1px solid #eef2f8;font-weight:600}
-table{width:100%;border-collapse:collapse;font-size:12px}
-th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #f0f4f9}
-th{color:#7a94b0;font-weight:500;font-size:11px}
-td.r{text-align:right}
-tr:hover td{background:#f8fafc}
-.badge-ndc{background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:12px;font-size:10px}
-.badge-hub{background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:12px;font-size:10px}
-.badge-high{background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:12px}
-.badge-mid{background:#fef9c3;color:#a16207;padding:2px 8px;border-radius:12px}
-.badge-low{background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:12px}
-.refresh-btn{background:#fff;border:1px solid #c2d0e5;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px}
-.filters{margin:15px 0;display:flex;gap:10px;flex-wrap:wrap}
-.filter-btn{padding:6px 14px;border:1px solid #c2d0e5;background:#fff;border-radius:20px;cursor:pointer;font-size:12px}
-.filter-btn.active{background:#023188;color:#fff;border-color:#023188}
-select{padding:6px 12px;border:1px solid #c2d0e5;border-radius:20px;background:#fff}
-.loading{text-align:center;padding:40px;color:#7a94b0}
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  body {
+    background: #b6c4dc;
+    padding: 20px;
+  }
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .header {
+    background: #023188;
+    color: #fff;
+    padding: 15px 20px;
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .header h1 {
+    font-size: 18px;
+  }
+  .status {
+    background: #1a5fc8;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+  }
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin: 15px 0;
+  }
+  .kpi-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 15px;
+    border-top: 3px solid;
+  }
+  .kpi-label {
+    font-size: 11px;
+    color: #7a94b0;
+    text-transform: uppercase;
+  }
+  .kpi-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1a2e45;
+  }
+  .kpi-sub {
+    font-size: 10px;
+    color: #7a94b0;
+    margin-top: 5px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eef2f8;
+    font-weight: 600;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  th, td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid #f0f4f9;
+  }
+  th {
+    color: #7a94b0;
+    font-weight: 500;
+    font-size: 11px;
+  }
+  td.r {
+    text-align: right;
+  }
+  tr:hover td {
+    background: #f8fafc;
+  }
+  .badge-ndc {
+    background: #dbeafe;
+    color: #1d4ed8;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+  }
+  .badge-hub {
+    background: #dcfce7;
+    color: #15803d;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+  }
+  .badge-high {
+    background: #dcfce7;
+    color: #15803d;
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+  .badge-mid {
+    background: #fef9c3;
+    color: #a16207;
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+  .badge-low {
+    background: #fee2e2;
+    color: #dc2626;
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+  .refresh-btn {
+    background: #fff;
+    border: 1px solid #c2d0e5;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .filters {
+    margin: 15px 0;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    padding: 6px 14px;
+    border: 1px solid #c2d0e5;
+    background: #fff;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .filter-btn.active {
+    background: #023188;
+    color: #fff;
+    border-color: #023188;
+  }
+  select {
+    padding: 6px 12px;
+    border: 1px solid #c2d0e5;
+    border-radius: 20px;
+    background: #fff;
+  }
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: #7a94b0;
+  }
+  .data-range {
+    font-size: 11px;
+    margin-left: 10px;
+    color: #7a94b0;
+  }
 </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
-    <h1>📊 Dashboard Insentif Pengiriman 2026</h1>
+    <h1>📊 Dashboard Insentif Pengiriman</h1>
     <div class="status" id="statusLabel">🔄 Loading data...</div>
   </div>
 
@@ -47,22 +186,16 @@ select{padding:6px 12px;border:1px solid #c2d0e5;border-radius:20px;background:#
     <button class="filter-btn active" onclick="setSite('all',this)">🌐 Semua Site</button>
     <button class="filter-btn" onclick="setSite('ndc',this)">🏭 NDC</button>
     <button class="filter-btn" onclick="setSite('hub',this)">🚚 Hub</button>
-    <select id="monthSelect" onchange="setMonth()">
-      <option value="all">📅 Semua Bulan</option>
-      <option value="January">Januari</option>
-      <option value="February">Februari</option>
-      <option value="March">Maret</option>
-      <option value="April">April</option>
-    </select>
+    <select id="monthSelect" onchange="setMonth()"></select>
     <button class="refresh-btn" onclick="loadData()">⟳ Refresh</button>
   </div>
 
-  <div class="kpi-grid" id="kpiGrid"></td><div class="loading">Loading...</div></tr></div>
+  <div class="kpi-grid" id="kpiGrid"><div class="loading">Loading...</div></div>
 
   <div class="card">
     <div class="card-header">📋 Ringkasan per Site</div>
     <div style="overflow-x:auto">
-      <table id="summaryTable">
+      <table>
         <thead><tr><th>Site</th><th>Tipe</th><th class="r">Trip</th><th class="r">DO/Trip</th><th class="r">UJP/Trip</th><th class="r">Insentif</th><th class="r">High</th><th class="r">Mid</th><th class="r">Low</th></tr></thead>
         <tbody id="summaryBody"><tr><td colspan="9" class="loading">Loading...</td></tr></tbody>
       </table>
@@ -72,7 +205,7 @@ select{padding:6px 12px;border:1px solid #c2d0e5;border-radius:20px;background:#
   <div class="card">
     <div class="card-header">👥 Daftar MPP</div>
     <div style="overflow-x:auto">
-      <table id="mppTable">
+      <table>
         <thead><tr><th>Nama</th><th>Role</th><th>Site</th><th>Bulan</th><th class="r">Insentif</th><th>Kategori</th></tr></thead>
         <tbody id="mppBody"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
       </table>
@@ -81,17 +214,17 @@ select{padding:6px 12px;border:1px solid #c2d0e5;border-radius:20px;background:#
 </div>
 
 <script>
-// ==================== 🔥 URL GSheet LO (SUDAH LANGSUNG) 🔥 ====================
+// 🔥 ==================== GANTI DENGAN URL GSHEET LO ====================
 const SITE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQyI8mksdqrv4RF0OBH_Hi2BdZ17fYNBU2_scPnUFb0EkI8QFFRwTEpJtoQvKoXJQaWUoGC7bOhGtB1/pub?output=csv';
 const MPP_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSfY4FSedZDglBnuz8UWZXdhg9LJGDKcAjGEYENyL8rTXAqguTTqZL0IQfwhC0KGFh_8POa0oqM8KMf/pub?output=csv';
-// ============================================================================
+// =========================================================================
 
 let SITE_MONTHLY = {};
 let ALL_MPP = [];
 let currentSite = 'all';
 let currentMonth = 'all';
+let availableMonths = [];
 
-const MONTHS = ['January','February','March','April'];
 const NK = ['JBBK', 'CKP', 'SDA'];
 const HK = ['Hub Bogor', 'Hub Tangerang', 'Hub Utara', 'Hub Bandung', 'Hub Yogya', 'Hub Semarang', 'Hub Lampung', 'Hub Palembang', 'Hub Kediri'];
 const AK = [...NK, ...HK];
@@ -143,11 +276,13 @@ async function loadData() {
     
     const siteRows = parseCSV(siteCsv);
     SITE_MONTHLY = {};
+    const monthSet = new Set();
     
     siteRows.forEach(row => {
       const site = row.site;
       const month = row.month;
       if (!site || !month) return;
+      monthSet.add(month);
       if (!SITE_MONTHLY[site]) SITE_MONTHLY[site] = {};
       SITE_MONTHLY[site][month] = {
         trips: parseInt(row.trips) || 0,
@@ -160,6 +295,23 @@ async function loadData() {
         mpp_high: parseInt(row.mpp_high) || 0
       };
     });
+    
+    // Urutkan bulan berdasarkan urutan muncul (Jan, Feb, Mar, Apr, May, Jun...)
+    const monthOrder = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    availableMonths = Array.from(monthSet).sort((a,b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
+    
+    // Update dropdown bulan
+    const monthSelect = document.getElementById('monthSelect');
+    monthSelect.innerHTML = '<option value="all">📅 Semua Bulan</option>' + 
+      availableMonths.map(m => `<option value="${m}">${m}</option>`).join('');
+    
+    // Set currentMonth ke bulan terakhir kalo masih 'all' atau bulan gaada
+    if (currentMonth === 'all' || !availableMonths.includes(currentMonth)) {
+      currentMonth = availableMonths.length > 0 ? availableMonths[availableMonths.length-1] : 'all';
+      monthSelect.value = currentMonth;
+    } else {
+      monthSelect.value = currentMonth;
+    }
     
     const mppRows = parseCSV(mppCsv);
     ALL_MPP = mppRows.map(row => {
@@ -182,7 +334,8 @@ async function loadData() {
     
     const siteCount = Object.keys(SITE_MONTHLY).length;
     const mppCount = ALL_MPP.length;
-    document.getElementById('statusLabel').innerHTML = `✅ ${siteCount} site · ${mppCount} MPP · ${new Date().toLocaleString('id-ID')}`;
+    const latestMonth = availableMonths.length ? availableMonths[availableMonths.length-1] : '-';
+    document.getElementById('statusLabel').innerHTML = `✅ Data sampai ${latestMonth} · ${siteCount} site · ${mppCount} MPP · ${new Date().toLocaleString('id-ID')}`;
     renderAll();
     
   } catch(e) {
@@ -193,7 +346,7 @@ async function loadData() {
 }
 
 function getMonths() {
-  return currentMonth === 'all' ? MONTHS : [currentMonth];
+  return currentMonth === 'all' ? availableMonths : [currentMonth];
 }
 
 function getSites() {
