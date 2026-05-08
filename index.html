@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Insentif 2026</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,sans-serif}
+html,body{height:100%;overflow:hidden}
+.app{display:flex;height:100vh;background:#b6c4dc;overflow:hidden}
+.sb{width:220px;min-width:220px;background:#023188;display:flex;flex-direction:column;color:#fff;font-size:12.5px;overflow-y:auto;flex-shrink:0}
+.sb-brand{padding:15px 16px 12px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sb-logo{display:flex;align-items:center;gap:9px}
+.sb-icon{width:34px;height:34px;background:#1a5fc8;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.sb-title{font-size:15px;font-weight:600}
+.sb-sub{font-size:10px;color:rgba(255,255,255,.4)}
+.sb-sec{padding:9px 0 2px}
+.sb-lbl{font-size:9px;color:rgba(255,255,255,.35);text-transform:uppercase;padding:0 14px 4px}
+.sb-item{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;color:rgba(255,255,255,.65);border-left:3px solid transparent}
+.sb-item:hover{color:#fff;background:rgba(255,255,255,.08)}
+.sb-item.active{color:#fff;background:#4a6ba6;border-left-color:#5aaff0}
+.sb-dot{width:7px;height:7px;border-radius:50%}
+.sb-sq{width:8px;height:8px;border-radius:1px}
+.sb-badge{margin-left:auto;background:rgba(255,255,255,.15);padding:2px 6px;border-radius:8px;font-size:9px}
+.sb-child{display:flex;align-items:center;gap:6px;padding:5px 14px 5px 28px;cursor:pointer;color:rgba(255,255,255,.5);font-size:12px}
+.sb-child:hover{color:rgba(255,255,255,.8);background:rgba(255,255,255,.05)}
+.sb-child.active{color:#fff;background:#3b61a1;border-left-color:#5aaff0}
+.cd{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.3)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.topbar{background:#dbe5ee;border-bottom:1px solid #c2d0e5;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.pg-title{font-size:16px;font-weight:700;color:#1a2e45}
+.chips{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.tg{display:flex;border-radius:7px;overflow:hidden;border:1.5px solid #023188}
+.tgb{padding:5px 13px;border:none;background:transparent;font-size:12px;color:#023188;cursor:pointer;font-weight:600}
+.tgb.active{background:#023188;color:#fff}
+.chip{font-size:11px;padding:4px 9px;border:1px solid #c2d0e5;border-radius:7px;background:#fff;color:#4a5568}
+.chip.site{background:#e4edf8;font-weight:600;color:#023188;cursor:pointer}
+.chip.time{color:#22c55e;border-color:#86efac;background:#f0fdf4}
+.rbtn{padding:5px 10px;border:1px solid #c2d0e5;border-radius:7px;background:#fff;cursor:pointer}
+.content{flex:1;overflow-y:auto;padding:14px 18px}
+.page{display:none}.page.active{display:block}
+.kpi5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:13px}
+.kpi{background:#fff;border:1px solid #c2d0e5;border-radius:10px;padding:11px 13px;position:relative}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.k-b::before{background:#023188}.k-g::before{background:#22c55e}.k-a::before{background:#f59c1a}
+.kpi-lbl{font-size:10px;color:#7a94b0;text-transform:uppercase;margin-bottom:4px}
+.kpi-val{font-size:22px;font-weight:700;color:#1a2e45}
+.kpi-sub{font-size:10px;color:#7a94b0;margin-top:3px}
+.tcard{background:#fff;border:1px solid #c2d0e5;border-radius:10px;padding:13px;margin-bottom:13px}
+.tc-title{font-size:14px;font-weight:700;color:#1a2e45}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{color:#7a94b0;font-weight:500;text-align:left;padding:7px 9px;border-bottom:1px solid #e4ecf4}
+th.r{text-align:right}
+td{padding:8px 9px;color:#1a2e45;border-bottom:1px solid #f2f6fb}
+td.r{text-align:right}
+tr:hover td{background:#f6f9fd}
+.bdg-ndc{background:#dbeafe;color:#1d4ed8;padding:2px 7px;border-radius:10px}
+.bdg-hub{background:#dcfce7;color:#15803d;padding:2px 7px;border-radius:10px}
+.cat-h{background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:20px}
+.cat-m{background:#fef9c3;color:#a16207;padding:2px 8px;border-radius:20px}
+.cat-l{background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:20px}
+.map-wrap{height:380px;background:#fff;border:1px solid #c2d0e5;border-radius:10px;overflow:hidden}
+</style>
+</head>
+<body>
+<div class="app">
+<nav class="sb">
+  <div class="sb-brand"><div class="sb-logo"><div class="sb-icon">IS</div><div><div class="sb-title">Insentif</div><div class="sb-sub">Dashboard</div></div></div></div>
+  <div class="sb-sec">
+    <div class="sb-lbl">Menu</div>
+    <div class="sb-item active" onclick="nav('overview',this)"><span class="sb-dot" style="background:#5aaff0"></span>Overview</div>
+    <div class="sb-item" onclick="nav('distribusi',this)"><span class="sb-dot" style="background:#ef4444"></span>Distribusi MPP</div>
+    <div class="sb-item" onclick="nav('insight',this)"><span class="sb-dot" style="background:#f59c1a"></span>Insight</div>
+  </div>
+  <div class="sb-sec">
+    <div class="sb-lbl">Sites</div>
+    <div class="sb-item" onclick="setSite('all',this)"><span class="sb-sq" style="background:#5aaff0"></span>Semua Site<span class="sb-badge">12</span></div>
+  </div>
+  <div class="sb-sec">
+    <div class="sb-lbl">NDC</div>
+    <div class="sb-item" onclick="setSite('ndc',this)"><span class="sb-sq" style="background:#60a5fa"></span>NDC<span class="sb-badge">3</span></div>
+    <div class="sb-child" onclick="setSite('JBBK',this)"><span class="cd"></span>Jababeka</div>
+    <div class="sb-child" onclick="setSite('CKP',this)"><span class="cd"></span>Cikupa</div>
+    <div class="sb-child" onclick="setSite('SDA',this)"><span class="cd"></span>Sidoarjo</div>
+  </div>
+  <div class="sb-sec">
+    <div class="sb-lbl">Hub</div>
+    <div class="sb-item" onclick="setSite('hub',this)"><span class="sb-sq" style="background:#4ade80"></span>HUB<span class="sb-badge">9</span></div>
+    <div class="sb-child" onclick="setSite('Hub Bogor',this)"><span class="cd"></span>Hub Bogor</div>
+    <div class="sb-child" onclick="setSite('Hub Tangerang',this)"><span class="cd"></span>Hub Tangerang</div>
+    <div class="sb-child" onclick="setSite('Hub Utara',this)"><span class="cd"></span>Hub Utara</div>
+    <div class="sb-child" onclick="setSite('Hub Bandung',this)"><span class="cd"></span>Hub Bandung</div>
+    <div class="sb-child" onclick="setSite('Hub Yogya',this)"><span class="cd"></span>Hub Yogya</div>
+    <div class="sb-child" onclick="setSite('Hub Semarang',this)"><span class="cd"></span>Hub Semarang</div>
+    <div class="sb-child" onclick="setSite('Hub Lampung',this)"><span class="cd"></span>Hub Lampung</div>
+    <div class="sb-child" onclick="setSite('Hub Palembang',this)"><span class="cd"></span>Hub Palembang</div>
+    <div class="sb-child" onclick="setSite('Hub Kediri',this)"><span class="cd"></span>Hub Kediri</div>
+  </div>
+</nav>
+<div class="main">
+  <div class="topbar">
+    <div class="pg-title" id="pgTitle">Overview</div>
+    <div class="chips">
+      <div class="tg"><button class="tgb active" onclick="setView('fm',this)">Full Month</button><button class="tgb" onclick="setView('mtd',this)">MTD</button></div>
+      <select id="monthSel" onchange="changeMonth()"><option value="all">Semua Bulan</option></select>
+      <div class="chip site" id="siteChip">Semua Site</div>
+      <div class="chip time" id="clkChip">--:--</div>
+      <div class="chip" id="updChip">Loading...</div>
+      <button class="rbtn" onclick="loadData()">⟳ Refresh</button>
+    </div>
+  </div>
+  <div class="content">
+    <div id="pg-overview" class="page active">
+      <div class="kpi5" id="kpi-ov"></div>
+      <div id="mapCard" style="background:#fff;border:1px solid #c2d0e5;border-radius:10px;overflow:hidden">
+        <div style="padding:10px 14px 6px;border-bottom:1px solid #eef2f8"><div class="ctitle">Sebaran Site — 2026</div><div class="csub">Klik marker untuk detail</div></div>
+        <div id="map" style="height:380px;width:100%"></div>
+      </div>
+    </div>
+    <div id="pg-distribusi" class="page">
+      <div class="kpi5" id="kpi-dist"></div>
+      <div class="tcard"><div class="tc-title">Kategori MPP per Bulan</div><div class="tbl-wrap"><table id="distTable"><thead><tr><th>#</th><th>Nama</th><th>Role</th><th>Site</th><th>Bulan</th><th class="r">Insentif</th><th>Kategori</th></tr></thead><tbody id="distBody"></tbody></table></div></div>
+    </div>
+    <div id="pg-insight" class="page">
+      <div class="tcard"><div class="tc-title">📊 Insight Perbandingan</div><div id="insightBody"></div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+// ==================== URL JSON DARI GITHUB ====================
+const URL_2026 = 'https://raw.githubusercontent.com/rahmatpambudi-dot/Insentif/main/data_2026.json';
+// =============================================================
+
+let RAW_DATA = [];
+let SITE_AGG = {};
+let MPP_LIST = [];
+let currentSite = 'all';
+let currentMonth = 'all';
+let currentView = 'fm';
+let availableMonths = [];
+let mapInstance = null;
+
+const AREA_TO_SITE = {
+  'BEKASI': 'JBBK', 'JAKARTA SELATAN': 'JBBK', 'JAKARTA PUSAT': 'JBBK', 'JAKARTA TIMUR': 'JBBK',
+  'PURWAKARTA': 'JBBK', 'Karawang Selat': 'JBBK', 'DEPOK': 'JBBK',
+  'Bogor Kabupaten': 'Hub Bogor', 'BOGOR': 'Hub Bogor',
+  'TANGERANG': 'Hub Tangerang'
+};
+
+const NK = ['JBBK','CKP','SDA'];
+const HK = ['Hub Bogor','Hub Tangerang','Hub Utara','Hub Bandung','Hub Yogya','Hub Semarang','Hub Lampung','Hub Palembang','Hub Kediri'];
+const AK = [...NK,...HK];
+const SITE_NAMES = {'JBBK':'Jababeka','CKP':'Cikupa','SDA':'Sidoarjo','Hub Bogor':'Hub Bogor','Hub Tangerang':'Hub Tangerang','Hub Utara':'Hub Utara','Hub Bandung':'Hub Bandung','Hub Yogya':'Hub Yogya','Hub Semarang':'Hub Semarang','Hub Lampung':'Hub Lampung','Hub Palembang':'Hub Palembang','Hub Kediri':'Hub Kediri'};
+const SITE_COLORS = {'JBBK':'#1e6fb5','CKP':'#2889d8','SDA':'#5aaff0','Hub Bogor':'#22c55e','Hub Tangerang':'#16a34a','Hub Utara':'#0891b2','Hub Bandung':'#0d9488','Hub Yogya':'#7c3aed','Hub Semarang':'#db2777','Hub Lampung':'#ea580c','Hub Palembang':'#9333ea','Hub Kediri':'#9f1239'};
+const SITE_COORDS = {'JBBK':{lat:-6.3644,lng:107.1570},'CKP':{lat:-6.2297,lng:106.5225},'SDA':{lat:-7.4478,lng:112.7183},'Hub Bogor':{lat:-6.5971,lng:106.8060},'Hub Tangerang':{lat:-6.1783,lng:106.6302},'Hub Utara':{lat:-6.1382,lng:106.8636},'Hub Bandung':{lat:-6.9175,lng:107.6191},'Hub Yogya':{lat:-7.7956,lng:110.3695},'Hub Semarang':{lat:-7.0051,lng:110.4381},'Hub Lampung':{lat:-5.4297,lng:105.2610},'Hub Palembang':{lat:-2.9761,lng:104.7754},'Hub Kediri':{lat:-7.8480,lng:112.0115}};
+
+function getSites() {
+  if(currentSite==='all') return AK;
+  if(currentSite==='ndc') return NK;
+  if(currentSite==='hub') return HK;
+  return [currentSite];
+}
+function getMonths() {
+  if(currentView==='mtd') return availableMonths.length?[availableMonths[availableMonths.length-1]]:[];
+  return currentMonth==='all'?availableMonths:[currentMonth];
+}
+
+function processData(data) {
+  SITE_AGG = {};
+  MPP_LIST = [];
+  const monthSet = new Set();
+  
+  data.forEach(row => {
+    const tgl = row.Tanggal;
+    if(!tgl) return;
+    const date = new Date(tgl);
+    const month = date.toLocaleString('en', {month:'long'});
+    const monthKey = `${month}`;
+    monthSet.add(monthKey);
+    
+    let area = row.Area || '';
+    let site = AREA_TO_SITE[area] || area;
+    if(!site || site==='') site = 'Others';
+    
+    const doVal = parseInt(row['Jumlah do']?.replace(/,/g,'')) || 0;
+    const titik = parseInt(row['jumlah titik']?.replace(/,/g,'')) || 0;
+    const ujp = parseFloat(row.UJP?.replace(/,/g,'')) || 0;
+    const insMPP = parseFloat(row['Insentif per MPP']?.replace(/,/g,'')) || 0;
+    
+    if(!SITE_AGG[site]) SITE_AGG[site] = {};
+    if(!SITE_AGG[site][monthKey]) SITE_AGG[site][monthKey] = { trips:0, do_:0, dp:0, ujp:0, ins:0 };
+    
+    SITE_AGG[site][monthKey].trips += 1;
+    SITE_AGG[site][monthKey].do_ += doVal;
+    SITE_AGG[site][monthKey].dp += titik;
+    SITE_AGG[site][monthKey].ujp += ujp;
+    SITE_AGG[site][monthKey].ins += insMPP;
+    
+    // MPP: driver & kenek
+    const driver = row.driver;
+    const kenek = row.kenek1;
+    const insVal = insMPP;
+    if(driver && driver !== 'DUMMY CUSTOMER' && driver !== '') {
+      MPP_LIST.push({ name: driver, role: 'Driver', site: site, month: monthKey, ins: insVal });
+    }
+    if(kenek && kenek !== 'DUMMY CUSTOMER' && kenek !== '') {
+      MPP_LIST.push({ name: kenek, role: 'Kenek', site: site, month: monthKey, ins: insVal });
+    }
+  });
+  
+  availableMonths = Array.from(monthSet).sort((a,b)=>new Date(a)-new Date(b));
+  const sel = document.getElementById('monthSel');
+  sel.innerHTML = '<option value="all">Semua Bulan</option>'+availableMonths.map(m=>`<option value="${m}">${m}</option>`).join('');
+  if(currentMonth==='all'||!availableMonths.includes(currentMonth)){currentMonth=availableMonths[0]||'all';sel.value=currentMonth;}
+}
+
+async function loadData() {
+  const upd = document.getElementById('updChip');
+  upd.innerHTML = '🔄 Loading data...';
+  try {
+    const res = await fetch(URL_2026);
+    RAW_DATA = await res.json();
+    processData(RAW_DATA);
+    upd.innerHTML = `✅ ${Object.keys(SITE_AGG).length} site · ${MPP_LIST.length} MPP · ${new Date().toLocaleString()}`;
+    renderAll();
+    renderMap();
+  } catch(e){ upd.innerHTML='❌ Gagal load! Cek koneksi'; console.error(e); }
+}
+
+function agg(sites, months) {
+  let trips=0,do_=0,dp=0,ujp=0,ins=0;
+  sites.forEach(s=>months.forEach(m=>{
+    const d = SITE_AGG[s]?.[m];
+    if(!d) return;
+    trips+=d.trips; do_+=d.do_; dp+=d.dp; ujp+=d.ujp; ins+=d.ins;
+  }));
+  return {trips,do_,dp,ujp,ins};
+}
+function fmt(n) {
+  if(!n&&n!==0) return '—';
+  if(n>=1e9) return (n/1e9).toFixed(1)+'B';
+  if(n>=1e6) return (n/1e6).toFixed(1)+'M';
+  if(n>=1e3) return Math.round(n/1e3)+'K';
+  return Math.round(n).toLocaleString();
+}
+function fmtN(n){return Math.round(n).toLocaleString();}
+
+function renderKPI() {
+  const d = agg(getSites(), getMonths());
+  document.getElementById('kpi-ov').innerHTML = `
+    <div class="kpi k-b"><div class="kpi-lbl">Total Trip</div><div class="kpi-val">${fmtN(d.trips)}</div><div class="kpi-sub">${getSites().length} site</div></div>
+    <div class="kpi k-b"><div class="kpi-lbl">Total DO</div><div class="kpi-val">${fmtN(d.do_)}</div></div>
+    <div class="kpi k-b"><div class="kpi-lbl">Drop Point</div><div class="kpi-val">${fmtN(d.dp)}</div></div>
+    <div class="kpi k-a"><div class="kpi-lbl">Total UJP</div><div class="kpi-val">${fmt(d.ujp)}</div></div>
+    <div class="kpi k-g"><div class="kpi-lbl">Total Insentif</div><div class="kpi-val">${fmt(d.ins)}</div></div>
+  `;
+  document.getElementById('kpi-dist').innerHTML = `
+    <div class="kpi k-g"><div class="kpi-lbl">High >1.5M</div><div class="kpi-val">${d.ins>1500000?1:0}</div></div>
+    <div class="kpi k-a"><div class="kpi-lbl">Mid 500K-1.5M</div><div class="kpi-val">0</div></div>
+    <div class="kpi k-r"><div class="kpi-lbl">Low <500K</div><div class="kpi-val">0</div></div>
+  `;
+}
+
+function renderDist() {
+  const filtered = MPP_LIST.filter(m=>getSites().includes(m.site) && getMonths().includes(m.month)).sort((a,b)=>b.ins-a.ins);
+  document.getElementById('distBody').innerHTML = filtered.slice(0,100).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name}</td><td>${r.role}</td><td>${SITE_NAMES[r.site]||r.site}</td><td>${r.month}</td><td class="r">${fmt(r.ins)}</td><td class="${r.ins>1500000?'cat-h':(r.ins>500000?'cat-m':'cat-l')}">${r.ins>1500000?'High':(r.ins>500000?'Mid':'Low')}</td></tr>`).join('');
+}
+
+function renderMap() {
+  if(!mapInstance){ mapInstance=L.map('map').setView([-3,118],5); L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd'}).addTo(mapInstance); }
+  Object.values(mapInstance._layers).forEach(l=>{if(l._popup) mapInstance.removeLayer(l);});
+  getSites().forEach(sk=>{
+    const c=SITE_COORDS[sk]; if(!c) return;
+    const d=agg([sk],getMonths());
+    L.circleMarker([c.lat,c.lng],{radius:8,fillColor:SITE_COLORS[sk]||'#023188',color:'white',weight:2,fillOpacity:0.8})
+      .bindPopup(`<b>${SITE_NAMES[sk]}</b><br>Trip: ${fmtN(d.trips)}<br>Insentif: ${fmt(d.ins)}`).addTo(mapInstance);
+  });
+  setTimeout(()=>mapInstance.invalidateSize(),100);
+}
+
+function renderInsight() {
+  const months = getMonths();
+  const last = months.length?months[months.length-1]:null;
+  const prev = last?availableMonths[availableMonths.indexOf(last)-1]:null;
+  if(!last) return;
+  const cur = agg(getSites(),[last]);
+  const pre = prev?agg(getSites(),[prev]):null;
+  let html = '<div class="tbl-wrap"><table><thead><tr><th>Metric</th><th class="r">Current</th><th class="r">Previous</th><th class="r">Growth</th></tr></thead><tbody>';
+  html += `<tr><td>Total Trip</td><td class="r">${fmtN(cur.trips)}</td><td class="r">${pre?fmtN(pre.trips):'-'}</td><td class="r">${pre?((cur.trips-pre.trips)/pre.trips*100).toFixed(1)+'%':'-'}</td></tr>`;
+  html += `<tr><td>Total DO</td><td class="r">${fmtN(cur.do_)}</td><td class="r">${pre?fmtN(pre.do_):'-'}</td><td class="r">${pre?((cur.do_-pre.do_)/pre.do_*100).toFixed(1)+'%':'-'}</td></tr>`;
+  html += `<tr><td>Total UJP</td><td class="r">${fmt(cur.ujp)}</td><td class="r">${pre?fmt(pre.ujp):'-'}</td><td class="r">${pre?((cur.ujp-pre.ujp)/pre.ujp*100).toFixed(1)+'%':'-'}</td></tr>`;
+  html += `<tr><td>Insentif</td><td class="r">${fmt(cur.ins)}</td><td class="r">${pre?fmt(pre.ins):'-'}</td><td class="r">${pre?((cur.ins-pre.ins)/pre.ins*100).toFixed(1)+'%':'-'}</td></tr>`;
+  html += '</tbody></table></div>';
+  document.getElementById('insightBody').innerHTML = html;
+}
+
+function renderAll(){ renderKPI(); renderDist(); if(document.getElementById('pg-insight').classList.contains('active')) renderInsight(); if(document.getElementById('pg-overview').classList.contains('active')) renderMap(); }
+
+function nav(pg,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById(`pg-${pg}`).classList.add('active');
+  if(btn)btn.classList.add('active');
+  document.getElementById('pgTitle').innerHTML=pg==='overview'?'Overview':pg==='distribusi'?'Distribusi MPP':'Insight';
+  if(pg==='insight') renderInsight();
+  if(pg==='overview' && mapInstance) setTimeout(()=>mapInstance.invalidateSize(),100);
+}
+function setSite(s,btn){
+  currentSite=s;
+  document.querySelectorAll('.sb-item,.sb-child').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  const lbl={'all':'Semua Site','ndc':'NDC','hub':'Hub',JBBK:'Jababeka',CKP:'Cikupa',SDA:'Sidoarjo'};
+  document.getElementById('siteChip').innerHTML=lbl[s]||s;
+  renderAll(); if(mapInstance) renderMap();
+}
+function setView(v,btn){ currentView=v; document.querySelectorAll('.tgb').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderAll(); if(mapInstance) renderMap(); }
+function changeMonth(){ currentMonth=document.getElementById('monthSel').value; renderAll(); if(mapInstance) renderMap(); }
+function tick(){document.getElementById('clkChip').innerHTML=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});}
+tick();setInterval(tick,60000);
+loadData();
+</script>
+</body>
+</html>
