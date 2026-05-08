@@ -3,11 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Insentif 2026 - Live</title>
+<title>Dashboard Insentif 2026 - Full</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,sans-serif}
   body{background:#b6c4dc;padding:20px}
-  .container{max-width:1400px;margin:0 auto}
+  .container{max-width:1600px;margin:0 auto}
   .header{background:#023188;color:#fff;padding:15px 20px;border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
   .header h1{font-size:18px}
   .status{background:#1a5fc8;padding:5px 12px;border-radius:20px;font-size:12px}
@@ -17,7 +21,7 @@
   .kpi-value{font-size:24px;font-weight:700;color:#1a2e45}
   .kpi-sub{font-size:10px;color:#7a94b0;margin-top:5px}
   .card{background:#fff;border-radius:10px;margin-bottom:15px;overflow:hidden}
-  .card-header{padding:12px 15px;border-bottom:1px solid #eef2f8;font-weight:600}
+  .card-header{padding:12px 15px;border-bottom:1px solid #eef2f8;font-weight:600;display:flex;justify-content:space-between;align-items:center}
   table{width:100%;border-collapse:collapse;font-size:12px}
   th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #f0f4f9}
   th{color:#7a94b0;font-weight:500;font-size:11px}
@@ -26,9 +30,11 @@
   .badge-ndc{background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:12px;font-size:10px}
   .badge-hub{background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:12px;font-size:10px}
   .badge-good{background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:12px}
-  .badge-warn{background:#fef9c3;color:#a16207;padding:2px 8px;border-radius:12px}
   .badge-bad{background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:12px}
   .badge-neutral{background:#f0f5fb;color:#4a6380;padding:2px 8px;border-radius:12px}
+  .badge-high{background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:12px}
+  .badge-mid{background:#fef9c3;color:#a16207;padding:2px 8px;border-radius:12px}
+  .badge-low{background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:12px}
   .refresh-btn{background:#fff;border:1px solid #c2d0e5;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px}
   .filters{margin:15px 0;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
   .filter-btn{padding:6px 14px;border:1px solid #c2d0e5;background:#fff;border-radius:20px;cursor:pointer;font-size:12px}
@@ -50,6 +56,16 @@
   .tg{display:flex;border-radius:7px;overflow:hidden;border:1.5px solid #023188}
   .tgb{padding:5px 13px;border:none;background:transparent;font-size:12px;color:#023188;cursor:pointer;font-weight:600}
   .tgb.active{background:#023188;color:#fff}
+  .nav-menu{display:flex;gap:5px;margin-bottom:15px;flex-wrap:wrap;background:#fff;padding:8px 15px;border-radius:10px}
+  .nav-btn{padding:8px 16px;border:none;background:#eef2f8;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600}
+  .nav-btn.active{background:#023188;color:#fff}
+  .page{display:none}
+  .page.active{display:block}
+  .ch2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:13px}
+  .map-container{height:400px;border-radius:10px;overflow:hidden}
+  .pager{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+  .pbtn{padding:4px 10px;border:1px solid #c2d0e5;background:#fff;border-radius:5px;cursor:pointer}
+  .pbtn.on{background:#023188;color:#fff}
 </style>
 </head>
 <body>
@@ -60,101 +76,138 @@
   </div>
 
   <div class="filters">
-    <button class="filter-btn active" onclick="setSite('all',this)">🌐 Semua Site</button>
-    <button class="filter-btn" onclick="setSite('ndc',this)">🏭 NDC</button>
-    <button class="filter-btn" onclick="setSite('hub',this)">🚚 Hub</button>
+    <button class="filter-btn active" onclick="setSite('all',this)">🌐 Semua Site (12)</button>
+    <button class="filter-btn" onclick="setSite('ndc',this)">🏭 NDC (3)</button>
+    <button class="filter-btn" onclick="setSite('hub',this)">🚚 Hub (9)</button>
     <select id="monthSelect" onchange="setMonth()">
       <option value="all">📅 Semua Bulan</option>
-      <option value="January">Januari</option>
-      <option value="February">Februari</option>
-      <option value="March">Maret</option>
-      <option value="April">April</option>
-      <option value="May">Mei <span class="partial-badge">Partial</span></option>
     </select>
     <button class="refresh-btn" onclick="loadData()">⟳ Refresh</button>
   </div>
 
-  <div class="kpi-grid" id="kpiGrid"><div class="loading">Loading...</div></div>
+  <div class="nav-menu">
+    <button class="nav-btn active" onclick="showPage('overview')">📊 Overview</button>
+    <button class="nav-btn" onclick="showPage('sites')">🏭 Per Site</button>
+    <button class="nav-btn" onclick="showPage('mpp')">👥 MPP</button>
+    <button class="nav-btn" onclick="showPage('insight')">📈 Insight</button>
+    <button class="nav-btn" onclick="showPage('map')">🗺️ Peta</button>
+  </div>
 
-  <div class="card">
-    <div class="card-header">📋 Ringkasan per Site</div>
-    <div style="overflow-x:auto">
-      <table>
-        <thead><tr><th>Site</th><th>Tipe</th><th class="r">Trip</th><th class="r">DO/Trip</th><th class="r">UJP/Trip</th><th class="r">Insentif</th><th class="r">High</th><th class="r">Mid</th><th class="r">Low</th></tr></thead>
-        <tbody id="summaryBody"><tr><td colspan="9" class="loading">Loading...</td></tr></tbody>
-      </table>
+  <!-- Page: Overview -->
+  <div id="page-overview" class="page active">
+    <div class="kpi-grid" id="kpiGrid"><div class="loading">Loading...</div></div>
+    <div class="card">
+      <div class="card-header">📋 Ringkasan per Site</div>
+      <div style="overflow-x:auto">
+        <table id="summaryTable">
+          <thead><tr><th>Site</th><th>Tipe</th><th class="r">Trip</th><th class="r">DO/Trip</th><th class="r">UJP/Trip</th><th class="r">Insentif</th><th class="r">High</th><th class="r">Mid</th><th class="r">Low</th></tr></thead>
+          <tbody id="summaryBody"><tr><td colspan="9" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <!-- INSIGHT SECTION -->
-  <div class="card" id="insightCard">
-    <div class="card-header">
-      📈 Insight & Perbandingan
-      <span id="insightSubtitle" style="font-size:11px;font-weight:normal;margin-left:10px"></span>
+  <!-- Page: Per Site -->
+  <div id="page-sites" class="page">
+    <div class="card">
+      <div class="card-header">🏭 Produktivitas per Site</div>
+      <div style="overflow-x:auto">
+        <table id="sitesTable">
+          <thead><tr><th>#</th><th>Site</th><th>Tipe</th><th class="r">Trip</th><th class="r">DO/Trip</th><th class="r">DP/Trip</th><th class="r">UJP/Trip</th><th class="r">UJP/DO</th><th class="r">Insentif</th></tr></thead>
+          <tbody id="sitesBody"><tr><td colspan="9" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
     </div>
-    <div style="padding:13px">
-      <!-- Month selector untuk insight -->
-      <div style="display:flex;gap:8px;margin-bottom:15px;flex-wrap:wrap" id="insightTg">
-        <button class="tgb" onclick="setInsightMonth('January',this)">Jan</button>
-        <button class="tgb" onclick="setInsightMonth('February',this)">Feb</button>
-        <button class="tgb" onclick="setInsightMonth('March',this)">Mar</button>
-        <button class="tgb" onclick="setInsightMonth('April',this)">Apr</button>
-        <button class="tgb" onclick="setInsightMonth('May',this)">Mei</button>
-      </div>
+  </div>
 
-      <!-- Tabel Perbandingan -->
-      <div class="tcard" style="margin-bottom:13px">
-        <div class="tc-title" id="insightRawTitle">Tabel Perbandingan</div>
-        <div style="overflow-x:auto;margin-top:8px">
-          <table style="width:100%">
-            <thead>
-              <tr>
-                <th style="width:28px">No</th><th>Deskripsi</th>
-                <th class="r" id="th-prev">Prev</th>
-                <th class="r" id="th-cur">Cur</th>
-                <th class="r">Gap MoM</th><th class="r">Growth MoM</th>
-                <th class="r" id="th-yoy">YoY</th>
-                <th class="r">Gap YoY</th><th class="r">Growth YoY</th>
-              </tr>
-            </thead>
-            <tbody id="insightRawBody"></tbody>
-          </table>
+  <!-- Page: MPP -->
+  <div id="page-mpp" class="page">
+    <div class="kpi-grid" id="mppKpiGrid"><div class="loading">Loading...</div></div>
+    <div class="card">
+      <div class="card-header">
+        <span>👥 Daftar MPP</span>
+        <div style="display:flex;gap:5px">
+          <button class="filter-btn active" onclick="setMppCat('all',this)" style="padding:4px 10px">Semua</button>
+          <button class="filter-btn" onclick="setMppCat('High',this)" style="padding:4px 10px">High (>1.5M)</button>
+          <button class="filter-btn" onclick="setMppCat('Mid',this)" style="padding:4px 10px">Mid (500K-1.5M)</button>
+          <button class="filter-btn" onclick="setMppCat('Low',this)" style="padding:4px 10px">Low (<500K)</button>
         </div>
       </div>
+      <div style="overflow-x:auto">
+        <table id="mppTable">
+          <thead><tr><th>#</th><th>Nama</th><th>Role</th><th>Site</th><th>Bulan</th><th class="r">Insentif</th><th>Kategori</th></tr></thead>
+          <tbody id="mppBody"><tr><td colspan="7" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="pager" id="mppPager"></div>
+    </div>
+  </div>
 
-      <!-- Cards MoM & YoY -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:13px">
-        <div class="tcard">
-          <div class="tc-title">📉 Perbandingan MoM</div>
-          <div class="tc-sub" id="insightMoMSub"></div>
-          <div id="insightMoMCards"></div>
-          <div id="insightMoMConclusion" style="margin-top:10px;padding:8px 10px;border-radius:7px;font-size:11px"></div>
-        </div>
-        <div class="tcard">
-          <div class="tc-title">📈 Perbandingan YoY</div>
-          <div class="tc-sub" id="insightYoYSub"></div>
-          <div id="insightYoYCards"></div>
-          <div id="insightYoYConclusion" style="margin-top:10px;padding:8px 10px;border-radius:7px;font-size:11px"></div>
+  <!-- Page: Insight -->
+  <div id="page-insight" class="page">
+    <div class="card">
+      <div class="card-header">
+        📈 Insight & Perbandingan
+        <div style="display:flex;gap:5px" id="insightMonthBtns">
+          <button class="tgb" onclick="setInsightMonth('January',this)">Jan</button>
+          <button class="tgb" onclick="setInsightMonth('February',this)">Feb</button>
+          <button class="tgb" onclick="setInsightMonth('March',this)">Mar</button>
+          <button class="tgb" onclick="setInsightMonth('April',this)">Apr</button>
+          <button class="tgb" onclick="setInsightMonth('May',this)">Mei</button>
         </div>
       </div>
+      <div style="padding:13px">
+        <div class="tcard">
+          <div class="tc-title" id="insightRawTitle">Tabel Perbandingan</div>
+          <div style="overflow-x:auto">
+            <table style="width:100%">
+              <thead><tr><th>No</th><th>Deskripsi</th><th class="r" id="th-prev">Prev</th><th class="r" id="th-cur">Cur</th><th class="r">Gap MoM</th><th class="r">Growth MoM</th><th class="r" id="th-yoy">YoY</th><th class="r">Gap YoY</th><th class="r">Growth YoY</th></tr></thead>
+              <tbody id="insightRawBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="ch2">
+          <div class="tcard">
+            <div class="tc-title">📉 Perbandingan Efisiensi MoM</div>
+            <div id="insightMoMCards"></div>
+            <div id="insightMoMConclusion" style="margin-top:10px;padding:8px 10px;border-radius:7px;font-size:11px"></div>
+          </div>
+          <div class="tcard">
+            <div class="tc-title">📈 Perbandingan Efisiensi YoY</div>
+            <div id="insightYoYCards"></div>
+            <div id="insightYoYConclusion" style="margin-top:10px;padding:8px 10px;border-radius:7px;font-size:11px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page: Map -->
+  <div id="page-map" class="page">
+    <div class="card">
+      <div class="card-header">🗺️ Sebaran Site</div>
+      <div id="map" class="map-container"></div>
     </div>
   </div>
 </div>
 
 <script>
-// ==================== APPS SCRIPT PROXY URL ====================
+// ==================== KONFIGURASI ====================
 const PROXY_URL = 'https://script.google.com/macros/s/AKfycbzt2pZNA10RhPZ6bhoPagoBYQJY9FLJq3O8_9HjLuWwoJKoAsiTxmpr1U_Ad935fNGtew/exec';
-// ================================================================
 
+// Data global
 let SITE_MONTHLY = {};
+let SITE_MONTHLY_2025 = {};
 let ALL_MPP = [];
-let TOP_MPP = [];
-let INSIGHT_DATA = {};
 let currentSite = 'all';
 let currentMonth = 'all';
 let availableMonths = [];
 let _insightMonth = 'April';
+let _mppCat = 'all';
+let _mppPage = 1;
+const MPP_PAGE_SIZE = 50;
 
+// Site definitions
 const NK = ['JBBK', 'CKP', 'SDA'];
 const HK = ['Hub Bogor', 'Hub Tangerang', 'Hub Utara', 'Hub Bandung', 'Hub Yogya', 'Hub Semarang', 'Hub Lampung', 'Hub Palembang', 'Hub Kediri'];
 const AK = [...NK, ...HK];
@@ -170,25 +223,44 @@ const SITE_COLORS = {
   'Hub Bandung': '#0d9488', 'Hub Yogya': '#7c3aed', 'Hub Semarang': '#db2777',
   'Hub Lampung': '#ea580c', 'Hub Palembang': '#9333ea', 'Hub Kediri': '#9f1239'
 };
+const SITE_COORDS = {
+  'JBBK': {lat: -6.3644, lng: 107.1570, name: 'Jababeka'},
+  'CKP': {lat: -6.2297, lng: 106.5225, name: 'Cikupa'},
+  'SDA': {lat: -7.4478, lng: 112.7183, name: 'Sidoarjo'},
+  'Hub Bogor': {lat: -6.5971, lng: 106.8060, name: 'Hub Bogor'},
+  'Hub Tangerang': {lat: -6.1783, lng: 106.6302, name: 'Hub Tangerang'},
+  'Hub Utara': {lat: -6.1382, lng: 106.8636, name: 'Hub Utara'},
+  'Hub Bandung': {lat: -6.9175, lng: 107.6191, name: 'Hub Bandung'},
+  'Hub Yogya': {lat: -7.7956, lng: 110.3695, name: 'Hub Yogya'},
+  'Hub Semarang': {lat: -7.0051, lng: 110.4381, name: 'Hub Semarang'},
+  'Hub Lampung': {lat: -5.4297, lng: 105.2610, name: 'Hub Lampung'},
+  'Hub Palembang': {lat: -2.9761, lng: 104.7754, name: 'Hub Palembang'},
+  'Hub Kediri': {lat: -7.8480, lng: 112.0115, name: 'Hub Kediri'}
+};
 
 const INSIGHT_METRICS = [
-  {key:'DO', label:'Total Delivery Order (DO)', icon:'📦', higherBetter:true, weight:0.5},
-  {key:'DP', label:'Total Drop Point (DP)', icon:'📍', higherBetter:true, weight:0.5},
-  {key:'Trip', label:'Total Trip', icon:'🚚', higherBetter:true, weight:0.5},
-  {key:'DO/Trip', label:'Produktivitas DO/Trip', icon:'📈', higherBetter:true, weight:0.5},
-  {key:'DP/Trip', label:'Produktivitas DP/Trip', icon:'📊', higherBetter:true, weight:3},
-  {key:'DO/DP', label:'Produktivitas DO/DP', icon:'📦', higherBetter:true, weight:0.5},
-  {key:'UJP/Trip', label:'Biaya UJP/Trip', icon:'💰', higherBetter:false, weight:2},
-  {key:'UJP/DO', label:'Biaya UJP/DO', icon:'⚖️', higherBetter:false, weight:1},
-  {key:'UJP/DP', label:'Biaya UJP/DP', icon:'🎯', higherBetter:false, weight:1},
-  {key:'UJP', label:'Total Biaya UJP', icon:'🔢', higherBetter:false, weight:1},
-  {key:'Insentif', label:'Biaya Insentif MPP', icon:'💵', higherBetter:false, weight:2},
+  {key:'DO', label:'Total Delivery Order', icon:'📦', higherBetter:true, weight:1},
+  {key:'DP', label:'Total Drop Point', icon:'📍', higherBetter:true, weight:1},
+  {key:'Trip', label:'Total Trip', icon:'🚚', higherBetter:true, weight:1},
+  {key:'DO/Trip', label:'DO/Trip', icon:'📈', higherBetter:true, weight:2},
+  {key:'DP/Trip', label:'DP/Trip', icon:'📊', higherBetter:true, weight:3},
+  {key:'DO/DP', label:'DO/DP', icon:'📦', higherBetter:true, weight:1},
+  {key:'UJP/Trip', label:'UJP/Trip', icon:'💰', higherBetter:false, weight:2},
+  {key:'UJP/DO', label:'UJP/DO', icon:'⚖️', higherBetter:false, weight:1},
+  {key:'UJP/DP', label:'UJP/DP', icon:'🎯', higherBetter:false, weight:1},
+  {key:'UJP', label:'Total UJP', icon:'🔢', higherBetter:false, weight:1},
+  {key:'Insentif', label:'Insentif MPP', icon:'💵', higherBetter:false, weight:2}
 ];
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May'];
 const MONTH_SHORT = {January:'Jan',February:'Feb',March:'Mar',April:'Apr',May:'Mei'};
 const PREV_MAP = {January:null,February:'January',March:'February',April:'March',May:'April'};
+const PARTIAL_MONTHS = ['May'];
 
+let mapInstance = null;
+let mapMarkers = {};
+
+// ==================== HELPERS ====================
 function parseCSV(csv) {
   const lines = csv.trim().split('\n');
   if (lines.length < 2) return [];
@@ -209,181 +281,6 @@ function parseCSV(csv) {
   });
 }
 
-async function loadData() {
-  const statusEl = document.getElementById('statusLabel');
-  statusEl.innerHTML = '🔄 Loading data...';
-  statusEl.style.background = '#1a5fc8';
-  
-  try {
-    const response = await fetch(PROXY_URL);
-    const data = await response.json();
-    
-    const siteRows = parseCSV(data.site_data);
-    const mppRows = parseCSV(data.mpp_data);
-    
-    // Build SITE_MONTHLY
-    SITE_MONTHLY = {};
-    const monthSet = new Set();
-    siteRows.forEach(row => {
-      const site = row.site;
-      const month = row.month;
-      if (!site || !month) return;
-      monthSet.add(month);
-      if (!SITE_MONTHLY[site]) SITE_MONTHLY[site] = {};
-      SITE_MONTHLY[site][month] = {
-        trips: parseInt(row.trips) || 0,
-        do_: parseFloat(row.do_) || 0,
-        dp: parseInt(row.dp) || 0,
-        ujp: parseFloat(row.ujp) || 0,
-        ins: parseFloat(row.ins) || 0,
-        mpp_low: parseInt(row.mpp_low) || 0,
-        mpp_mid: parseInt(row.mpp_mid) || 0,
-        mpp_high: parseInt(row.mpp_high) || 0
-      };
-    });
-    
-    // Urutkan bulan
-    const monthOrder = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    availableMonths = Array.from(monthSet).sort((a,b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
-    
-    // Update dropdown bulan
-    const monthSelect = document.getElementById('monthSelect');
-    monthSelect.innerHTML = '<option value="all">📅 Semua Bulan</option>' + 
-      availableMonths.map(m => `<option value="${m}">${m}${m==='May'?' (Partial)':''}</option>`).join('');
-    
-    if (currentMonth === 'all' || !availableMonths.includes(currentMonth)) {
-      currentMonth = availableMonths.length > 0 ? availableMonths[availableMonths.length-1] : 'all';
-      monthSelect.value = currentMonth;
-    } else {
-      monthSelect.value = currentMonth;
-    }
-    
-    // Build ALL_MPP
-    ALL_MPP = mppRows.map(row => {
-      const ins = parseFloat(row.ins) || 0;
-      let cat = row.cat;
-      if (!cat) {
-        if (ins > 1500000) cat = 'High';
-        else if (ins > 500000) cat = 'Mid';
-        else cat = 'Low';
-      }
-      return {
-        nik: row.nik || '',
-        name: row.name || 'Unknown',
-        role: row.role || 'Driver',
-        site: row.site || '',
-        site_key: row.site || '',
-        month: row.month || '',
-        ins: ins,
-        cat: cat
-      };
-    });
-    
-    // Build TOP_MPP
-    const mppMap = new Map();
-    ALL_MPP.forEach(m => {
-      const key = `${m.nik}|${m.site_key}`;
-      if (!mppMap.has(key)) {
-        mppMap.set(key, {
-          nik: m.nik,
-          name: m.name,
-          site: m.site,
-          site_key: m.site_key,
-          months: {},
-          total: 0
-        });
-      }
-      const entry = mppMap.get(key);
-      entry.months[m.month] = m.ins;
-      entry.total += m.ins;
-    });
-    TOP_MPP = Array.from(mppMap.values())
-      .sort((a,b) => b.total - a.total)
-      .slice(0, 20)
-      .map(entry => ({
-        name: entry.name,
-        site: entry.site,
-        site_key: entry.site_key,
-        Jan: entry.months.January || 0,
-        Feb: entry.months.February || 0,
-        Mar: entry.months.March || 0,
-        Apr: entry.months.April || 0,
-        May: entry.months.May || 0,
-        total: entry.total
-      }));
-    
-    // Build INSIGHT_DATA dari site_rows
-    INSIGHT_DATA = {};
-    const monthOrderIdx = (m) => monthOrder.indexOf(m);
-    siteRows.forEach(row => {
-      const month = row.month;
-      if (!month) return;
-      if (!INSIGHT_DATA[month]) INSIGHT_DATA[month] = { year26: { DO:0, DP:0, Trip:0, UJP:0, Insentif:0 }, year25: { DO:0, DP:0, Trip:0, UJP:0, Insentif:0 } };
-      const is2025 = row.year === '2025';
-      const target = is2025 ? INSIGHT_DATA[month].year25 : INSIGHT_DATA[month].year26;
-      target.DO += parseFloat(row.do_) || 0;
-      target.DP += parseInt(row.dp) || 0;
-      target.Trip += parseInt(row.trips) || 0;
-      target.UJP += parseFloat(row.ujp) || 0;
-      target.Insentif += parseFloat(row.ins) || 0;
-    });
-    
-    // Hitung ratio
-    Object.keys(INSIGHT_DATA).forEach(month => {
-      const d26 = INSIGHT_DATA[month].year26;
-      const d25 = INSIGHT_DATA[month].year25;
-      const t26 = d26.Trip || 1, do26 = d26.DO || 1, dp26 = d26.DP || 1;
-      d26['DO/Trip'] = +(d26.DO / t26).toFixed(2);
-      d26['DP/Trip'] = +(d26.DP / t26).toFixed(2);
-      d26['UJP/Trip'] = Math.round(d26.UJP / t26);
-      d26['UJP/DO'] = Math.round(d26.UJP / do26);
-      d26['UJP/DP'] = Math.round(d26.UJP / dp26);
-      d26['DO/DP'] = +(d26.DO / dp26).toFixed(2);
-      
-      const t25 = d25.Trip || 1, do25 = d25.DO || 1, dp25 = d25.DP || 1;
-      d25['DO/Trip'] = +(d25.DO / t25).toFixed(2);
-      d25['DP/Trip'] = +(d25.DP / t25).toFixed(2);
-      d25['UJP/Trip'] = Math.round(d25.UJP / t25);
-      d25['UJP/DO'] = Math.round(d25.UJP / do25);
-      d25['UJP/DP'] = Math.round(d25.UJP / dp25);
-      d25['DO/DP'] = +(d25.DO / dp25).toFixed(2);
-    });
-    
-    const siteCount = Object.keys(SITE_MONTHLY).length;
-    const mppCount = ALL_MPP.length;
-    const latestMonth = availableMonths.length ? availableMonths[availableMonths.length-1] : '-';
-    statusEl.innerHTML = `✅ Data sampai ${latestMonth} · ${siteCount} site · ${mppCount} MPP · ${new Date().toLocaleString('id-ID')}`;
-    
-    // Set insight month ke bulan terakhir
-    _insightMonth = availableMonths.includes('May') ? 'May' : (availableMonths.length ? availableMonths[availableMonths.length-1] : 'April');
-    highlightInsightButton();
-    
-    renderAll();
-    renderInsight();
-    
-  } catch(e) {
-    console.error(e);
-    statusEl.innerHTML = '❌ Gagal load data! Cek koneksi & Apps Script';
-    statusEl.style.background = '#dc2626';
-  }
-}
-
-function highlightInsightButton() {
-  document.querySelectorAll('#insightTg .tgb').forEach(btn => {
-    const monthMap = {'Jan':'January','Feb':'February','Mar':'March','Apr':'April','Mei':'May'};
-    const btnMonth = monthMap[btn.textContent.trim()];
-    if (btnMonth === _insightMonth) btn.classList.add('active');
-    else btn.classList.remove('active');
-  });
-}
-
-function setInsightMonth(month, btn) {
-  _insightMonth = month;
-  document.querySelectorAll('#insightTg .tgb').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  renderInsight();
-}
-
 function getMonths() {
   return currentMonth === 'all' ? availableMonths : [currentMonth];
 }
@@ -395,12 +292,14 @@ function getSites() {
   return [currentSite];
 }
 
-function agg(sites, months) {
+function agg(sites, months, use2025 = false) {
+  const source = use2025 ? SITE_MONTHLY_2025 : SITE_MONTHLY;
   let trips = 0, do_ = 0, dp = 0, ujp = 0, ins = 0, ml = 0, mm = 0, mh = 0;
   sites.forEach(s => {
     months.forEach(m => {
-      const d = SITE_MONTHLY[s]?.[m];
+      let d = source[s]?.[m];
       if (!d) return;
+      if (PARTIAL_MONTHS.includes(m) && d.period) d = d.period;
       trips += d.trips || 0;
       do_ += d.do_ || 0;
       dp += d.dp || 0;
@@ -423,32 +322,105 @@ function fmt(n) {
 }
 
 function fmtN(n) { return Math.round(n).toLocaleString('id-ID'); }
-function fmtInsight(v, key) {
-  if (!key) return v;
-  if (['DO','DP','Trip'].includes(key)) return Math.round(v).toLocaleString('id-ID');
-  if (['DO/Trip','DP/Trip','DO/DP'].includes(key)) return typeof v === 'number' ? v.toFixed(2) : v;
-  if (['UJP/Trip','UJP/DO','UJP/DP'].includes(key)) return 'Rp ' + Math.round(v).toLocaleString('id-ID');
-  if (['Insentif','UJP'].includes(key)) {
-    const abs = Math.abs(v);
-    if (abs >= 1e9) return (abs/1e9).toFixed(1) + 'B';
-    if (abs >= 1e6) return (abs/1e6).toFixed(1) + 'M';
-    return Math.round(abs).toLocaleString('id-ID');
+
+// ==================== LOAD DATA ====================
+async function loadData() {
+  const statusEl = document.getElementById('statusLabel');
+  statusEl.innerHTML = '🔄 Loading data...';
+  statusEl.style.background = '#1a5fc8';
+  
+  try {
+    const response = await fetch(PROXY_URL);
+    const data = await response.json();
+    
+    const siteRows = parseCSV(data.site_data);
+    const mppRows = parseCSV(data.mpp_data);
+    
+    SITE_MONTHLY = {};
+    SITE_MONTHLY_2025 = {};
+    const monthSet = new Set();
+    
+    siteRows.forEach(row => {
+      const site = row.site;
+      const month = row.month;
+      const year = row.year || '2026';
+      if (!site || !month) return;
+      monthSet.add(month);
+      
+      const target = year === '2025' ? SITE_MONTHLY_2025 : SITE_MONTHLY;
+      if (!target[site]) target[site] = {};
+      
+      target[site][month] = {
+        trips: parseInt(row.trips) || 0,
+        do_: parseFloat(row.do_) || 0,
+        dp: parseInt(row.dp) || 0,
+        ujp: parseFloat(row.ujp) || 0,
+        ins: parseFloat(row.ins) || 0,
+        mpp_low: parseInt(row.mpp_low) || 0,
+        mpp_mid: parseInt(row.mpp_mid) || 0,
+        mpp_high: parseInt(row.mpp_high) || 0
+      };
+      
+      if (month === 'May' && row.period_trips) {
+        target[site][month].period = {
+          trips: parseInt(row.period_trips) || 0,
+          do_: parseFloat(row.period_do) || 0,
+          dp: parseInt(row.period_dp) || 0,
+          ujp: parseFloat(row.period_ujp) || 0,
+          ins: parseFloat(row.period_ins) || 0
+        };
+      }
+    });
+    
+    const monthOrder = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    availableMonths = Array.from(monthSet).sort((a,b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
+    
+    const monthSelect = document.getElementById('monthSelect');
+    monthSelect.innerHTML = '<option value="all">📅 Semua Bulan</option>' + 
+      availableMonths.map(m => `<option value="${m}">${m}${PARTIAL_MONTHS.includes(m) ? ' (Partial)' : ''}</option>`).join('');
+    
+    if (currentMonth === 'all' || !availableMonths.includes(currentMonth)) {
+      currentMonth = availableMonths.length ? availableMonths[availableMonths.length-1] : 'all';
+      monthSelect.value = currentMonth;
+    }
+    
+    ALL_MPP = mppRows.map(row => {
+      const ins = parseFloat(row.ins) || 0;
+      let cat = row.cat;
+      if (!cat) {
+        if (ins > 1500000) cat = 'High';
+        else if (ins > 500000) cat = 'Mid';
+        else cat = 'Low';
+      }
+      return {
+        nik: row.nik || '',
+        name: row.name || 'Unknown',
+        role: row.role || 'Driver',
+        site: row.site || '',
+        month: row.month || '',
+        ins: ins,
+        cat: cat
+      };
+    });
+    
+    _insightMonth = availableMonths.includes('May') ? 'May' : (availableMonths.length ? availableMonths[availableMonths.length-1] : 'April');
+    highlightInsightButton();
+    
+    const siteCount = Object.keys(SITE_MONTHLY).length;
+    statusEl.innerHTML = `✅ ${siteCount} site · ${ALL_MPP.length} MPP · data sampai ${availableMonths[availableMonths.length-1] || '-'} · ${new Date().toLocaleString('id-ID')}`;
+    
+    renderAll();
+    renderInsight();
+    renderMap();
+    
+  } catch(e) {
+    console.error(e);
+    statusEl.innerHTML = '❌ Gagal load data! Cek koneksi';
+    statusEl.style.background = '#dc2626';
   }
-  return typeof v === 'number' ? v.toFixed(1) : v;
 }
 
-function insightBadge(pct, higherBetter) {
-  if (pct === 0 || Math.abs(pct) < 0.05) return { cls: 'badge-neutral', text: 'STABIL' };
-  const good = higherBetter ? pct > 0 : pct < 0;
-  return good ? { cls: 'badge-good', text: 'MEMBAIK' } : { cls: 'badge-bad', text: 'MENURUN' };
-}
-
-function pctArrow(pct) {
-  if (pct > 0) return '<span class="up-arr">▲</span>';
-  if (pct < 0) return '<span class="dn-arr">▼</span>';
-  return '<span class="neu-arr">→</span>';
-}
-
+// ==================== RENDER FUNCTIONS ====================
 function renderKPI() {
   const d = agg(getSites(), getMonths());
   const sites = getSites();
@@ -469,24 +441,150 @@ function renderSummary() {
     return { s, d, type: NK.includes(s) ? 'NDC' : 'Hub' };
   }).filter(r => r.d.trips > 0).sort((a,b) => b.d.ins - a.d.ins);
   
-  if (rows.length === 0) {
-    document.getElementById('summaryBody').innerHTML = '<tr><td colspan="9" class="loading">Tidak ada data</td></tr>';
-    return;
-  }
+  document.getElementById('summaryBody').innerHTML = rows.length ? rows.map(r => `
+    <tr><td style="font-weight:500;color:${SITE_COLORS[r.s]}">${SITE_NAMES[r.s] || r.s}</td>
+    <td><span class="${r.type === 'NDC' ? 'badge-ndc' : 'badge-hub'}">${r.type}</span></td>
+    <td class="r">${fmtN(r.d.trips)}</td>
+    <td class="r">${r.d.trips ? (r.d.do_/r.d.trips).toFixed(1) : '-'}</td>
+    <td class="r">${r.d.trips ? fmt(r.d.ujp/r.d.trips) : '-'}</td>
+    <td class="r" style="font-weight:600">${fmt(r.d.ins)}</td>
+    <td class="r" style="color:#15803d">${r.d.mh}</td>
+    <td class="r" style="color:#a16207">${r.d.mm}</td>
+    <td class="r" style="color:#dc2626">${r.d.ml}</td></tr>
+  `).join('') : '<tr><td colspan="9" class="loading">Tidak ada data</td></tr>';
+}
+
+function renderSitesTable() {
+  const months = getMonths();
+  const sites = getSites();
+  const rows = sites.map(s => {
+    const d = agg([s], months);
+    return { s, d, type: NK.includes(s) ? 'NDC' : 'Hub' };
+  }).filter(r => r.d.trips > 0).sort((a,b) => b.d.ins - a.d.ins);
   
-  document.getElementById('summaryBody').innerHTML = rows.map(r => `
-    <tr>
-      <td style="font-weight:500;color:${SITE_COLORS[r.s]}">${SITE_NAMES[r.s] || r.s}</td>
-      <td><span class="${r.type === 'NDC' ? 'badge-ndc' : 'badge-hub'}">${r.type}</span></td>
-      <td class="r">${fmtN(r.d.trips)}</td>
-      <td class="r">${r.d.trips ? (r.d.do_/r.d.trips).toFixed(1) : '-'}</td>
-      <td class="r">${r.d.trips ? fmt(r.d.ujp/r.d.trips) : '-'}</td>
-      <td class="r" style="font-weight:600">${fmt(r.d.ins)}</td>
-      <td class="r" style="color:#15803d">${r.d.mh}</td>
-      <td class="r" style="color:#a16207">${r.d.mm}</td>
-      <td class="r" style="color:#dc2626">${r.d.ml}</td>
-    </tr>
+  document.getElementById('sitesBody').innerHTML = rows.map((r,i) => `
+    <tr><td style="color:#94a3b8">${i+1}</td>
+    <td style="font-weight:500;color:${SITE_COLORS[r.s]}">${SITE_NAMES[r.s] || r.s}</td>
+    <td><span class="${r.type === 'NDC' ? 'badge-ndc' : 'badge-hub'}">${r.type}</span></td>
+    <td class="r">${fmtN(r.d.trips)}</td>
+    <td class="r">${r.d.trips ? (r.d.do_/r.d.trips).toFixed(1) : '-'}</td>
+    <td class="r">${r.d.trips ? (r.d.dp/r.d.trips).toFixed(1) : '-'}</td>
+    <td class="r">${r.d.trips ? fmt(r.d.ujp/r.d.trips) : '-'}</td>
+    <td class="r">${r.d.do_ ? fmt(r.d.ujp/r.d.do_) : '-'}</td>
+    <td class="r" style="font-weight:600">${fmt(r.d.ins)}</td></tr>
   `).join('');
+}
+
+function renderMppKpi() {
+  const months = getMonths();
+  const sites = getSites();
+  const d = agg(sites, months);
+  document.getElementById('mppKpiGrid').innerHTML = `
+    <div class="kpi-card" style="border-top-color:#22c55e"><div class="kpi-label">High (>1.5M)</div><div class="kpi-value">${d.mh}</div><div class="kpi-sub">MPP</div></div>
+    <div class="kpi-card" style="border-top-color:#f59c1a"><div class="kpi-label">Mid (500K-1.5M)</div><div class="kpi-value">${d.mm}</div><div class="kpi-sub">MPP</div></div>
+    <div class="kpi-card" style="border-top-color:#ef4444"><div class="kpi-label">Low (<500K)</div><div class="kpi-value">${d.ml}</div><div class="kpi-sub">MPP</div></div>
+    <div class="kpi-card" style="border-top-color:#023188"><div class="kpi-label">Total MPP</div><div class="kpi-value">${d.mh + d.mm + d.ml}</div><div class="kpi-sub">Driver + Kenek</div></div>
+  `;
+}
+
+function renderMppTable() {
+  const months = getMonths();
+  const sites = getSites();
+  let filtered = ALL_MPP.filter(m => sites.includes(m.site) && months.includes(m.month));
+  if (_mppCat !== 'all') filtered = filtered.filter(m => m.cat === _mppCat);
+  filtered.sort((a,b) => b.ins - a.ins);
+  
+  const total = filtered.length;
+  const totalPages = Math.ceil(total / MPP_PAGE_SIZE);
+  if (_mppPage > totalPages) _mppPage = 1;
+  const start = (_mppPage - 1) * MPP_PAGE_SIZE;
+  const pageData = filtered.slice(start, start + MPP_PAGE_SIZE);
+  
+  document.getElementById('mppBody').innerHTML = pageData.map((r,i) => `
+    <tr><td style="color:#94a3b8">${start + i + 1}</td>
+    <td style="font-weight:500">${r.name}</td>
+    <td>${r.role}</td>
+    <td>${SITE_NAMES[r.site] || r.site}</td>
+    <td>${r.month}</td>
+    <td class="r">Rp ${r.ins.toLocaleString('id-ID')}</td>
+    <td><span class="badge-${r.cat === 'High' ? 'high' : (r.cat === 'Mid' ? 'mid' : 'low')}">${r.cat}</span></td>
+  </tr>
+  `).join('');
+  
+  let pagerHtml = `<button class="pbtn" ${_mppPage === 1 ? 'disabled' : ''} onclick="mppGoPage(${_mppPage-1})">◀ Prev</button>
+                   <span style="font-size:12px">Halaman ${_mppPage} dari ${totalPages || 1}</span>
+                   <button class="pbtn" ${_mppPage === totalPages || totalPages === 0 ? 'disabled' : ''} onclick="mppGoPage(${_mppPage+1})">Next ▶</button>`;
+  document.getElementById('mppPager').innerHTML = pagerHtml;
+}
+
+function mppGoPage(page) { _mppPage = page; renderMppTable(); }
+function setMppCat(cat, btn) {
+  _mppCat = cat; _mppPage = 1;
+  document.querySelectorAll('#page-mpp .filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderMppTable();
+}
+
+// ==================== INSIGHT ====================
+function highlightInsightButton() {
+  const monthMap = {'Jan':'January','Feb':'February','Mar':'March','Apr':'April','Mei':'May'};
+  document.querySelectorAll('#insightMonthBtns .tgb').forEach(btn => {
+    const btnMonth = monthMap[btn.textContent.trim()];
+    if (btnMonth === _insightMonth) btn.classList.add('active');
+    else btn.classList.remove('active');
+  });
+}
+
+function setInsightMonth(month, btn) {
+  _insightMonth = month;
+  document.querySelectorAll('#insightMonthBtns .tgb').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderInsight();
+}
+
+function getMetricValue(month, sitesList, use2025 = false, usePartial = false) {
+  const source = use2025 ? SITE_MONTHLY_2025 : SITE_MONTHLY;
+  const result = { DO:0, DP:0, Trip:0, UJP:0, Insentif:0 };
+  sitesList.forEach(sk => {
+    let d = source[sk]?.[month];
+    if (!d) return;
+    if (usePartial && PARTIAL_MONTHS.includes(month) && d.period) d = d.period;
+    result.DO += d.do_ || 0;
+    result.DP += d.dp || 0;
+    result.Trip += d.trips || 0;
+    result.UJP += d.ujp || 0;
+    result.Insentif += d.ins || 0;
+  });
+  const t = result.Trip || 1, doVal = result.DO || 1, dpVal = result.DP || 1;
+  return {
+    DO: result.DO, DP: result.DP, Trip: result.Trip, UJP: result.UJP, Insentif: result.Insentif,
+    'DO/Trip': +(result.DO / t).toFixed(2),
+    'DP/Trip': +(result.DP / t).toFixed(2),
+    'UJP/Trip': Math.round(result.UJP / t),
+    'UJP/DO': Math.round(result.UJP / doVal),
+    'UJP/DP': Math.round(result.UJP / dpVal),
+    'DO/DP': +(result.DO / dpVal).toFixed(2)
+  };
+}
+
+function fmtInsight(v, key) {
+  if (!key) return v;
+  if (['DO','DP','Trip'].includes(key)) return Math.round(v).toLocaleString('id-ID');
+  if (['DO/Trip','DP/Trip','DO/DP'].includes(key)) return typeof v === 'number' ? v.toFixed(2) : v;
+  if (['UJP/Trip','UJP/DO','UJP/DP'].includes(key)) return 'Rp ' + Math.round(v).toLocaleString('id-ID');
+  if (['Insentif','UJP'].includes(key)) {
+    const abs = Math.abs(v);
+    if (abs >= 1e9) return (abs/1e9).toFixed(1) + 'B';
+    if (abs >= 1e6) return (abs/1e6).toFixed(1) + 'M';
+    return Math.round(abs).toLocaleString('id-ID');
+  }
+  return typeof v === 'number' ? v.toFixed(1) : v;
+}
+
+function insightBadge(pct, higherBetter) {
+  if (pct === 0 || Math.abs(pct) < 0.05) return { cls: 'badge-neutral', text: 'STABIL' };
+  const good = higherBetter ? pct > 0 : pct < 0;
+  return good ? { cls: 'badge-good', text: 'MEMBAIK' } : { cls: 'badge-bad', text: 'MENURUN' };
 }
 
 function renderInsight() {
@@ -495,71 +593,40 @@ function renderInsight() {
   const prev = PREV_MAP[m];
   const mn = MONTH_SHORT[m] || m;
   const pmn = prev ? MONTH_SHORT[prev] : '—';
+  const isPartial = PARTIAL_MONTHS.includes(m);
+  const isPrevPartial = PARTIAL_MONTHS.includes(prev) || (m === 'May' && prev === 'April');
   
-  // Ambil data aggregated untuk bulan ini dan sebelumnya
-  function aggMonth(sm, month, sitesList) {
-    const r = { DO:0, DP:0, Trip:0, UJP:0, Insentif:0 };
-    sitesList.forEach(sk => {
-      const d = sm[sk]?.[month] || {};
-      r.DO += d.do_ || 0;
-      r.DP += d.dp || 0;
-      r.Trip += d.trips || 0;
-      r.UJP += d.ujp || 0;
-      r.Insentif += d.ins || 0;
-    });
-    const t = r.Trip || 1, doVal = r.DO || 1, dpVal = r.DP || 1;
-    return {
-      DO: r.DO, DP: r.DP, Trip: r.Trip, UJP: r.UJP, Insentif: r.Insentif,
-      'DO/Trip': +(r.DO / t).toFixed(2),
-      'DP/Trip': +(r.DP / t).toFixed(2),
-      'UJP/Trip': Math.round(r.UJP / t),
-      'UJP/DO': Math.round(r.UJP / doVal),
-      'UJP/DP': Math.round(r.UJP / dpVal),
-      'DO/DP': +(r.DO / dpVal).toFixed(2)
-    };
-  }
+  const v26 = getMetricValue(m, sites, false, isPartial);
+  const vp = prev ? getMetricValue(prev, sites, false, isPrevPartial) : null;
+  const v25 = getMetricValue(m, sites, true, isPartial);
   
-  const v26 = aggMonth(SITE_MONTHLY, m, sites);
-  const v25 = aggMonth(SITE_MONTHLY, m, sites); // Note: 2025 data perlu dari sumber terpisah
-  const vp = prev ? aggMonth(SITE_MONTHLY, prev, sites) : null;
-  
-  // Untuk YoY, idealnya dari data 2025 terpisah, tapi fallback pakai current
-  // (karena data 2025 tidak ada di proxy ini)
-  
-  document.getElementById('insightSubtitle').innerHTML = `${mn} 2026 vs ${pmn} 2026 (MoM)`;
-  document.getElementById('insightMoMSub').innerHTML = `${pmn} 2026 vs ${mn} 2026`;
-  document.getElementById('insightYoYSub').innerHTML = `${mn} 2025 vs ${mn} 2026`;
-  document.getElementById('insightRawTitle').innerHTML = `Tabel Perbandingan — ${mn} 2026`;
+  document.getElementById('insightRawTitle').innerHTML = `Tabel Perbandingan — ${mn} 2026${isPartial ? ' (Partial 4 hari)' : ''}`;
   document.getElementById('th-prev').textContent = pmn ? pmn + ' 26' : '—';
   document.getElementById('th-cur').textContent = mn + ' 26';
   document.getElementById('th-yoy').textContent = mn + ' 25';
   
-  // Tabel
   const tbody = document.getElementById('insightRawBody');
   tbody.innerHTML = INSIGHT_METRICS.map((met, i) => {
     const c = v26[met.key] || 0;
     const p = vp ? vp[met.key] || 0 : null;
-    const y = 0; // placeholder, perlu data 2025
+    const y = v25[met.key] || 0;
     const momGap = p !== null ? c - p : null;
     const momPct = (p && p !== 0) ? ((c - p) / Math.abs(p)) * 100 : null;
     const yoyGap = c - y;
     const yoyPct = y !== 0 ? ((c - y) / Math.abs(y)) * 100 : 0;
     const mc = momPct !== null ? (met.higherBetter ? (momPct > 0 ? '#15803d' : '#dc2626') : (momPct < 0 ? '#15803d' : '#dc2626')) : '#94a3b8';
     const yc = met.higherBetter ? (yoyPct > 0 ? '#15803d' : '#dc2626') : (yoyPct < 0 ? '#15803d' : '#dc2626');
-    return `<tr>
-      <td style="color:#94a3b8">${i+1}</td>
-      <td style="font-weight:500">${met.icon} ${met.label}</td>
+    return `<tr><td style="color:#94a3b8">${i+1}</td><td style="font-weight:500">${met.icon} ${met.label}</td>
       <td class="r">${p !== null ? fmtInsight(p, met.key) : '—'}</td>
       <td class="r" style="font-weight:600">${fmtInsight(c, met.key)}</td>
       <td class="r" style="color:${mc}">${momGap !== null ? (momGap > 0 ? '+' : '') + fmtInsight(momGap, met.key) : '—'}</td>
       <td class="r" style="color:${mc};font-weight:600">${momPct !== null ? (momPct > 0 ? '+' : '') + momPct.toFixed(1) + '%' : '—'}</td>
-      <td class="r">—</td>
-      <td class="r" style="color:${yc}">—</td>
-      <td class="r" style="color:${yc};font-weight:600">—</td>
+      <td class="r">${y !== 0 ? fmtInsight(y, met.key) : '—'}</td>
+      <td class="r" style="color:${yc}">${y !== 0 ? (yoyGap > 0 ? '+' : '') + fmtInsight(yoyGap, met.key) : '—'}</td>
+      <td class="r" style="color:${yc};font-weight:600">${y !== 0 ? (yoyPct > 0 ? '+' : '') + yoyPct.toFixed(1) + '%' : '—'}</td>
     </tr>`;
   }).join('');
   
-  // Cards MoM
   function buildCards(containerId, conclusionId, getPct) {
     const cont = document.getElementById(containerId);
     if (!cont) return;
@@ -572,30 +639,18 @@ function renderInsight() {
       const w = met.weight || 1;
       if (badge.cls === 'badge-good') good += w;
       else if (badge.cls === 'badge-bad') bad += w;
-      const arrow = pctArrow(isGood ? Math.abs(pct) : -Math.abs(pct));
+      const arrow = isGood ? '<span class="up-arr">▲</span>' : (pct !== 0 ? '<span class="dn-arr">▼</span>' : '<span class="neu-arr">→</span>');
       const pctColor = isGood ? '#15803d' : (pct !== 0 ? '#dc2626' : '#94a3b8');
-      return `<div class="ins-row">
-        <div class="ins-icon" style="background:${isGood ? '#f0fdf4' : '#fff5f5'}">${met.icon}</div>
-        <div class="ins-label">${met.label}</div>
-        <div class="ins-mom">${arrow}<span class="ins-pct" style="color:${pctColor}">${(pct > 0 ? '+' : '') + pct.toFixed(1)}%</span><span class="ins-badge ${badge.cls}">${badge.text}</span></div>
-      </div>`;
+      return `<div class="ins-row"><div class="ins-icon" style="background:${isGood ? '#f0fdf4' : '#fff5f5'}">${met.icon}</div><div class="ins-label">${met.label}</div><div class="ins-mom">${arrow}<span class="ins-pct" style="color:${pctColor}">${(pct > 0 ? '+' : '') + pct.toFixed(1)}%</span><span class="ins-badge ${badge.cls}">${badge.text}</span></div></div>`;
     }).join('');
-    
     const concl = document.getElementById(conclusionId);
     if (concl) {
-      if (good > bad) {
-        concl.style.background = '#dcfce7';
-        concl.style.color = '#15803d';
-        concl.innerHTML = '✅ Efisiensi & Produktivitas MENINGKAT';
-      } else if (bad > good) {
-        concl.style.background = '#fee2e2';
-        concl.style.color = '#dc2626';
-        concl.innerHTML = '⚠️ Efisiensi & Produktivitas MENURUN';
-      } else {
-        concl.style.background = '#fef9c3';
-        concl.style.color = '#a16207';
-        concl.innerHTML = '📊 Mixed Performance';
-      }
+      const ratio = good / (good + bad || 1);
+      if (ratio >= 0.6) concl.innerHTML = '✅ Operasional Efisien & Produktivitas Meningkat';
+      else if (ratio <= 0.4) concl.innerHTML = '⚠️ Perlu Evaluasi — Produktivitas Menurun';
+      else concl.innerHTML = '📊 Mixed Performance — Cek Detail per Metrik';
+      concl.style.background = ratio >= 0.6 ? '#dcfce7' : (ratio <= 0.4 ? '#fee2e2' : '#fef9c3');
+      concl.style.color = ratio >= 0.6 ? '#15803d' : (ratio <= 0.4 ? '#dc2626' : '#a16207');
     }
   }
   
@@ -604,34 +659,84 @@ function renderInsight() {
     const p = vp ? vp[key] || 0 : null;
     return (p !== null && p !== 0) ? ((c - p) / Math.abs(p)) * 100 : null;
   });
+  buildCards('insightYoYCards', 'insightYoYConclusion', key => {
+    const c = v26[key] || 0;
+    const y = v25[key] || 0;
+    return y !== 0 ? ((c - y) / Math.abs(y)) * 100 : null;
+  });
+}
+
+// ==================== MAP ====================
+function renderMap() {
+  if (!mapInstance) {
+    mapInstance = L.map('map').setView([-3, 118], 5);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '© <a href="https://openstreetmap.org">OSM</a>',
+      subdomains: 'abcd'
+    }).addTo(mapInstance);
+  }
   
-  // YoY cards (placeholder)
-  buildCards('insightYoYCards', 'insightYoYConclusion', key => null);
+  Object.values(mapMarkers).forEach(m => mapInstance.removeLayer(m));
+  mapMarkers = {};
+  
+  const sites = getSites();
+  sites.forEach(sk => {
+    const coords = SITE_COORDS[sk];
+    if (!coords) return;
+    const months = getMonths();
+    const d = agg([sk], months);
+    const color = SITE_COLORS[sk] || '#023188';
+    const popupContent = `<b>${coords.name}</b><br>Trip: ${fmtN(d.trips)}<br>Insentif: ${fmt(d.ins)}<br>High: ${d.mh} | Mid: ${d.mm} | Low: ${d.ml}`;
+    const marker = L.circleMarker([coords.lat, coords.lng], {
+      radius: 8, fillColor: color, color: '#fff', weight: 2, opacity: 1, fillOpacity: 0.8
+    }).bindPopup(popupContent).addTo(mapInstance);
+    mapMarkers[sk] = marker;
+  });
+}
+
+// ==================== NAVIGATION ====================
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(`page-${page}`).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+  if (page === 'map' && mapInstance) setTimeout(() => mapInstance.invalidateSize(), 100);
+  if (page === 'insight') renderInsight();
+  if (page === 'mpp') { renderMppKpi(); renderMppTable(); }
+  if (page === 'sites') renderSitesTable();
+  if (page === 'overview') { renderKPI(); renderSummary(); }
+}
+
+function setSite(site, btn) {
+  currentSite = site;
+  _mppPage = 1;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderAll();
+  if (document.getElementById('page-insight').classList.contains('active')) renderInsight();
+  if (document.getElementById('page-map').classList.contains('active')) renderMap();
+}
+
+function setMonth() {
+  currentMonth = document.getElementById('monthSelect').value;
+  _mppPage = 1;
+  renderAll();
+  if (document.getElementById('page-insight').classList.contains('active')) renderInsight();
+  if (document.getElementById('page-map').classList.contains('active')) renderMap();
 }
 
 function renderAll() {
   renderKPI();
   renderSummary();
-  if (document.getElementById('insightCard')) renderInsight();
+  renderSitesTable();
+  renderMppKpi();
+  renderMppTable();
 }
 
-function setSite(site, btn) {
-  currentSite = site;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  renderAll();
-  if (document.getElementById('insightCard')) renderInsight();
-}
-
-function setMonth() {
-  currentMonth = document.getElementById('monthSelect').value;
-  renderAll();
-  if (document.getElementById('insightCard')) renderInsight();
-}
-
-// Initialize
+// ==================== INIT ====================
+Chart.register(ChartDataLabels);
 loadData();
-setInterval(loadData, 300000); // Auto refresh tiap 5 menit
+setInterval(loadData, 300000);
 </script>
 </body>
 </html>
