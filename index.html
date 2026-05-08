@@ -3,176 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Insentif - Auto Update</title>
+<title>Dashboard Insentif - Live</title>
 <style>
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: system-ui, -apple-system, sans-serif;
-  }
-  body {
-    background: #b6c4dc;
-    padding: 20px;
-  }
-  .container {
-    max-width: 1400px;
-    margin: 0 auto;
-  }
-  .header {
-    background: #023188;
-    color: #fff;
-    padding: 15px 20px;
-    border-radius: 10px 10px 0 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  .header h1 {
-    font-size: 18px;
-  }
-  .status {
-    background: #1a5fc8;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-  }
-  .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
-    margin: 15px 0;
-  }
-  .kpi-card {
-    background: #fff;
-    border-radius: 10px;
-    padding: 15px;
-    border-top: 3px solid;
-  }
-  .kpi-label {
-    font-size: 11px;
-    color: #7a94b0;
-    text-transform: uppercase;
-  }
-  .kpi-value {
-    font-size: 24px;
-    font-weight: 700;
-    color: #1a2e45;
-  }
-  .kpi-sub {
-    font-size: 10px;
-    color: #7a94b0;
-    margin-top: 5px;
-  }
-  .card {
-    background: #fff;
-    border-radius: 10px;
-    margin-bottom: 15px;
-    overflow: hidden;
-  }
-  .card-header {
-    padding: 12px 15px;
-    border-bottom: 1px solid #eef2f8;
-    font-weight: 600;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-  }
-  th, td {
-    padding: 10px 12px;
-    text-align: left;
-    border-bottom: 1px solid #f0f4f9;
-  }
-  th {
-    color: #7a94b0;
-    font-weight: 500;
-    font-size: 11px;
-  }
-  td.r {
-    text-align: right;
-  }
-  tr:hover td {
-    background: #f8fafc;
-  }
-  .badge-ndc {
-    background: #dbeafe;
-    color: #1d4ed8;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 10px;
-  }
-  .badge-hub {
-    background: #dcfce7;
-    color: #15803d;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 10px;
-  }
-  .badge-high {
-    background: #dcfce7;
-    color: #15803d;
-    padding: 2px 8px;
-    border-radius: 12px;
-  }
-  .badge-mid {
-    background: #fef9c3;
-    color: #a16207;
-    padding: 2px 8px;
-    border-radius: 12px;
-  }
-  .badge-low {
-    background: #fee2e2;
-    color: #dc2626;
-    padding: 2px 8px;
-    border-radius: 12px;
-  }
-  .refresh-btn {
-    background: #fff;
-    border: 1px solid #c2d0e5;
-    padding: 6px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 12px;
-  }
-  .filters {
-    margin: 15px 0;
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .filter-btn {
-    padding: 6px 14px;
-    border: 1px solid #c2d0e5;
-    background: #fff;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 12px;
-  }
-  .filter-btn.active {
-    background: #023188;
-    color: #fff;
-    border-color: #023188;
-  }
-  select {
-    padding: 6px 12px;
-    border: 1px solid #c2d0e5;
-    border-radius: 20px;
-    background: #fff;
-  }
-  .loading {
-    text-align: center;
-    padding: 40px;
-    color: #7a94b0;
-  }
-  .data-range {
-    font-size: 11px;
-    margin-left: 10px;
-    color: #7a94b0;
-  }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,sans-serif}
+  body{background:#b6c4dc;padding:20px}
+  .container{max-width:1400px;margin:0 auto}
+  .header{background:#023188;color:#fff;padding:15px 20px;border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+  .header h1{font-size:18px}
+  .status{background:#1a5fc8;padding:5px 12px;border-radius:20px;font-size:12px}
+  .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:15px 0}
+  .kpi-card{background:#fff;border-radius:10px;padding:15px;border-top:3px solid}
+  .kpi-label{font-size:11px;color:#7a94b0;text-transform:uppercase}
+  .kpi-value{font-size:24px;font-weight:700;color:#1a2e45}
+  .kpi-sub{font-size:10px;color:#7a94b0;margin-top:5px}
+  .card{background:#fff;border-radius:10px;margin-bottom:15px;overflow:hidden}
+  .card-header{padding:12px 15px;border-bottom:1px solid #eef2f8;font-weight:600}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #f0f4f9}
+  th{color:#7a94b0;font-weight:500;font-size:11px}
+  td.r{text-align:right}
+  tr:hover td{background:#f8fafc}
+  .badge-ndc{background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:12px;font-size:10px}
+  .badge-hub{background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:12px;font-size:10px}
+  .badge-high{background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:12px}
+  .badge-mid{background:#fef9c3;color:#a16207;padding:2px 8px;border-radius:12px}
+  .badge-low{background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:12px}
+  .refresh-btn{background:#fff;border:1px solid #c2d0e5;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px}
+  .filters{margin:15px 0;display:flex;gap:10px;flex-wrap:wrap}
+  .filter-btn{padding:6px 14px;border:1px solid #c2d0e5;background:#fff;border-radius:20px;cursor:pointer;font-size:12px}
+  .filter-btn.active{background:#023188;color:#fff;border-color:#023188}
+  select{padding:6px 12px;border:1px solid #c2d0e5;border-radius:20px;background:#fff}
+  .loading{text-align:center;padding:40px;color:#7a94b0}
 </style>
 </head>
 <body>
@@ -195,7 +56,7 @@
   <div class="card">
     <div class="card-header">📋 Ringkasan per Site</div>
     <div style="overflow-x:auto">
-      <table>
+      <table id="summaryTable">
         <thead><tr><th>Site</th><th>Tipe</th><th class="r">Trip</th><th class="r">DO/Trip</th><th class="r">UJP/Trip</th><th class="r">Insentif</th><th class="r">High</th><th class="r">Mid</th><th class="r">Low</th></tr></thead>
         <tbody id="summaryBody"><tr><td colspan="9" class="loading">Loading...</td></tr></tbody>
       </table>
@@ -205,7 +66,7 @@
   <div class="card">
     <div class="card-header">👥 Daftar MPP</div>
     <div style="overflow-x:auto">
-      <table>
+      <table id="mppTable">
         <thead><tr><th>Nama</th><th>Role</th><th>Site</th><th>Bulan</th><th class="r">Insentif</th><th>Kategori</th></tr></thead>
         <tbody id="mppBody"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
       </table>
@@ -214,10 +75,10 @@
 </div>
 
 <script>
-// 🔥 ==================== GANTI DENGAN URL GSHEET LO ====================
+// 🔥 ==================== URL GSHEET LO ====================
 const SITE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQyI8mksdqrv4RF0OBH_Hi2BdZ17fYNBU2_scPnUFb0EkI8QFFRwTEpJtoQvKoXJQaWUoGC7bOhGtB1/pub?output=csv';
 const MPP_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSfY4FSedZDglBnuz8UWZXdhg9LJGDKcAjGEYENyL8rTXAqguTTqZL0IQfwhC0KGFh_8POa0oqM8KMf/pub?output=csv';
-// =========================================================================
+// ==========================================================
 
 let SITE_MONTHLY = {};
 let ALL_MPP = [];
@@ -262,8 +123,9 @@ function parseCSV(csv) {
 }
 
 async function loadData() {
-  document.getElementById('statusLabel').innerHTML = '🔄 Loading data...';
-  document.getElementById('statusLabel').style.background = '#1a5fc8';
+  const statusEl = document.getElementById('statusLabel');
+  statusEl.innerHTML = '🔄 Loading data...';
+  statusEl.style.background = '#1a5fc8';
   
   try {
     const [siteRes, mppRes] = await Promise.all([
@@ -296,16 +158,13 @@ async function loadData() {
       };
     });
     
-    // Urutkan bulan berdasarkan urutan muncul (Jan, Feb, Mar, Apr, May, Jun...)
     const monthOrder = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     availableMonths = Array.from(monthSet).sort((a,b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
     
-    // Update dropdown bulan
     const monthSelect = document.getElementById('monthSelect');
     monthSelect.innerHTML = '<option value="all">📅 Semua Bulan</option>' + 
       availableMonths.map(m => `<option value="${m}">${m}</option>`).join('');
     
-    // Set currentMonth ke bulan terakhir kalo masih 'all' atau bulan gaada
     if (currentMonth === 'all' || !availableMonths.includes(currentMonth)) {
       currentMonth = availableMonths.length > 0 ? availableMonths[availableMonths.length-1] : 'all';
       monthSelect.value = currentMonth;
@@ -335,13 +194,13 @@ async function loadData() {
     const siteCount = Object.keys(SITE_MONTHLY).length;
     const mppCount = ALL_MPP.length;
     const latestMonth = availableMonths.length ? availableMonths[availableMonths.length-1] : '-';
-    document.getElementById('statusLabel').innerHTML = `✅ Data sampai ${latestMonth} · ${siteCount} site · ${mppCount} MPP · ${new Date().toLocaleString('id-ID')}`;
+    statusEl.innerHTML = `✅ Data sampai ${latestMonth} · ${siteCount} site · ${mppCount} MPP · ${new Date().toLocaleString('id-ID')}`;
     renderAll();
     
   } catch(e) {
     console.error(e);
-    document.getElementById('statusLabel').innerHTML = '❌ Gagal load data! Cek koneksi';
-    document.getElementById('statusLabel').style.background = '#dc2626';
+    statusEl.innerHTML = '❌ Gagal load data! Cek koneksi atau aktifkan CORS extension';
+    statusEl.style.background = '#dc2626';
   }
 }
 
@@ -387,31 +246,11 @@ function renderKPI() {
   const d = agg(getSites(), getMonths());
   const sites = getSites();
   document.getElementById('kpiGrid').innerHTML = `
-    <div class="kpi-card" style="border-top-color:#023188">
-      <div class="kpi-label">Total Trip</div>
-      <div class="kpi-value">${d.trips.toLocaleString('id-ID')}</div>
-      <div class="kpi-sub">${sites.length} site</div>
-    </div>
-    <div class="kpi-card" style="border-top-color:#023188">
-      <div class="kpi-label">Total DO</div>
-      <div class="kpi-value">${d.do_.toLocaleString('id-ID')}</div>
-      <div class="kpi-sub"></div>
-    </div>
-    <div class="kpi-card" style="border-top-color:#023188">
-      <div class="kpi-label">Drop Point</div>
-      <div class="kpi-value">${d.dp.toLocaleString('id-ID')}</div>
-      <div class="kpi-sub"></div>
-    </div>
-    <div class="kpi-card" style="border-top-color:#f59c1a">
-      <div class="kpi-label">Total UJP</div>
-      <div class="kpi-value">${fmt(d.ujp)}</div>
-      <div class="kpi-sub">Rp</div>
-    </div>
-    <div class="kpi-card" style="border-top-color:#22c55e">
-      <div class="kpi-label">Total Insentif</div>
-      <div class="kpi-value">${fmt(d.ins)}</div>
-      <div class="kpi-sub">Rp</div>
-    </div>
+    <div class="kpi-card" style="border-top-color:#023188"><div class="kpi-label">Total Trip</div><div class="kpi-value">${d.trips.toLocaleString('id-ID')}</div><div class="kpi-sub">${sites.length} site</div></div>
+    <div class="kpi-card" style="border-top-color:#023188"><div class="kpi-label">Total DO</div><div class="kpi-value">${d.do_.toLocaleString('id-ID')}</div><div class="kpi-sub"></div></div>
+    <div class="kpi-card" style="border-top-color:#023188"><div class="kpi-label">Drop Point</div><div class="kpi-value">${d.dp.toLocaleString('id-ID')}</div><div class="kpi-sub"></div></div>
+    <div class="kpi-card" style="border-top-color:#f59c1a"><div class="kpi-label">Total UJP</div><div class="kpi-value">${fmt(d.ujp)}</div><div class="kpi-sub">Rp</div></div>
+    <div class="kpi-card" style="border-top-color:#22c55e"><div class="kpi-label">Total Insentif</div><div class="kpi-value">${fmt(d.ins)}</div><div class="kpi-sub">Rp</div></div>
   `;
 }
 
@@ -484,9 +323,8 @@ function setMonth() {
   renderAll();
 }
 
-// Eksekusi
 loadData();
-setInterval(loadData, 300000); // Auto refresh tiap 5 menit
+setInterval(loadData, 300000);
 </script>
 </body>
 </html>
