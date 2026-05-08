@@ -8,82 +8,158 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
-body{background:#b6c4dc;padding:20px}
-.container{max-width:1400px;margin:0 auto}
-.header{background:#023188;color:white;padding:15px 20px;border-radius:10px 10px 0 0;display:flex;justify-content:space-between}
-.status{padding:5px 12px;background:#1a5fc8;border-radius:20px;font-size:12px}
-.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:15px 0}
-.kpi-card{background:white;border-radius:10px;padding:15px;border-top:3px solid}
-.kpi-label{font-size:11px;color:#666}
-.kpi-value{font-size:24px;font-weight:bold}
-.card{background:white;border-radius:10px;margin-bottom:15px}
-.card-header{padding:12px 15px;border-bottom:1px solid #eee;font-weight:bold}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,sans-serif}
+html,body{height:100%;overflow:hidden}
+.app{display:flex;height:100vh;background:#b6c4dc;overflow:hidden}
+.sb{width:220px;min-width:220px;background:#023188;display:flex;flex-direction:column;color:#fff;font-size:12.5px;overflow-y:auto;flex-shrink:0}
+.sb-brand{padding:15px 16px 12px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sb-logo{display:flex;align-items:center;gap:9px}
+.sb-icon{width:34px;height:34px;background:#1a5fc8;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.sb-title{font-size:15px;font-weight:600}
+.sb-sub{font-size:10px;color:rgba(255,255,255,.4)}
+.sb-item{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;color:rgba(255,255,255,.65);border-left:3px solid transparent}
+.sb-item:hover{color:#fff;background:rgba(255,255,255,.08)}
+.sb-item.active{color:#fff;background:#4a6ba6;border-left-color:#5aaff0}
+.sb-dot{width:7px;height:7px;border-radius:50%}
+.sb-sq{width:8px;height:8px;border-radius:1px}
+.sb-badge{margin-left:auto;background:rgba(255,255,255,.15);padding:2px 6px;border-radius:8px;font-size:9px}
+.sb-child{display:flex;align-items:center;gap:6px;padding:5px 14px 5px 28px;cursor:pointer;color:rgba(255,255,255,.5);font-size:12px}
+.sb-child:hover{color:rgba(255,255,255,.8);background:rgba(255,255,255,.05)}
+.sb-child.active{color:#fff;background:#3b61a1;border-left-color:#5aaff0}
+.cd{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.3)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.topbar{background:#dbe5ee;border-bottom:1px solid #c2d0e5;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.pg-title{font-size:16px;font-weight:700;color:#1a2e45}
+.chips{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.tg{display:flex;border-radius:7px;overflow:hidden;border:1.5px solid #023188}
+.tgb{padding:5px 13px;border:none;background:transparent;font-size:12px;color:#023188;cursor:pointer;font-weight:600}
+.tgb.active{background:#023188;color:#fff}
+.chip{font-size:11px;padding:4px 9px;border:1px solid #c2d0e5;border-radius:7px;background:#fff;color:#4a5568}
+.chip.site{background:#e4edf8;font-weight:600;color:#023188;cursor:pointer}
+.chip.time{color:#22c55e;border-color:#86efac;background:#f0fdf4}
+.rbtn{padding:5px 10px;border:1px solid #c2d0e5;border-radius:7px;background:#fff;cursor:pointer}
+.content{flex:1;overflow-y:auto;padding:14px 18px}
+.page{display:none}.page.active{display:block}
+.kpi5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:13px}
+.kpi{background:#fff;border:1px solid #c2d0e5;border-radius:10px;padding:11px 13px;position:relative}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.k-b::before{background:#023188}.k-g::before{background:#22c55e}.k-a::before{background:#f59c1a}
+.kpi-lbl{font-size:10px;color:#7a94b0;text-transform:uppercase;margin-bottom:4px}
+.kpi-val{font-size:22px;font-weight:700;color:#1a2e45}
+.kpi-sub{font-size:10px;color:#7a94b0;margin-top:3px}
+.tcard{background:#fff;border:1px solid #c2d0e5;border-radius:10px;padding:13px;margin-bottom:13px}
+.tc-title{font-size:14px;font-weight:700;color:#1a2e45}
+.tc-sub{font-size:11px;color:#7a94b0;margin-bottom:9px}
+.tbl-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:12px}
-th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #eee}
-th{color:#666}
+th{color:#7a94b0;font-weight:500;text-align:left;padding:7px 9px;border-bottom:1px solid #e4ecf4}
+th.r{text-align:right}
+td{padding:8px 9px;color:#1a2e45;border-bottom:1px solid #f2f6fb}
 td.r{text-align:right}
-.filters{margin:15px 0;display:flex;gap:10px;flex-wrap:wrap}
-.filter-btn{padding:6px 14px;border:1px solid #ccc;background:white;border-radius:20px;cursor:pointer}
-.filter-btn.active{background:#023188;color:white}
-select{padding:6px 12px;border-radius:20px}
-.loading{text-align:center;padding:40px;color:#666}
-.badge-ndc{background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:12px}
-.badge-hub{background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:12px}
-.nav-menu{display:flex;gap:5px;margin-bottom:15px;background:white;padding:8px 15px;border-radius:10px}
-.nav-btn{padding:8px 16px;border:none;background:#eef2f8;border-radius:8px;cursor:pointer}
-.nav-btn.active{background:#023188;color:white}
-.page{display:none}
-.page.active{display:block}
-.map-container{height:400px;border-radius:10px}
+tr:hover td{background:#f6f9fd}
+.bdg-ndc{background:#dbeafe;color:#1d4ed8;padding:2px 7px;border-radius:10px;font-size:10px}
+.bdg-hub{background:#dcfce7;color:#15803d;padding:2px 7px;border-radius:10px;font-size:10px}
+.map-wrap{height:380px;background:#fff;border:1px solid #c2d0e5;border-radius:10px}
+.pager{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.pbtn{padding:4px 10px;border:1px solid #c2d0e5;background:#fff;border-radius:5px;cursor:pointer}
+.filter-group{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.cf{padding:4px 11px;border:1px solid #c2d0e5;border-radius:12px;background:#f0f5fb;cursor:pointer;font-size:11px}
+.cf.active{background:#023188;color:#fff}
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="header">
-    <h1>📊 Dashboard Insentif 2026</h1>
-    <div class="status" id="statusLabel">Loading data...</div>
+<div class="app">
+<nav class="sb">
+  <div class="sb-brand">
+    <div class="sb-logo"><div class="sb-icon">IS</div><div><div class="sb-title">Insentif</div><div class="sb-sub">Dashboard</div></div></div>
   </div>
-
-  <div class="filters">
-    <button class="filter-btn active" onclick="setSite('all',this)">🌐 Semua Site</button>
-    <button class="filter-btn" onclick="setSite('ndc',this)">🏭 NDC</button>
-    <button class="filter-btn" onclick="setSite('hub',this)">🚚 Hub</button>
-    <select id="monthSelect" onchange="setMonth()"><option value="all">Semua Bulan</option></select>
+  <div class="sb-sec">
+    <div class="sb-lbl">Menu</div>
+    <div class="sb-item active" onclick="nav('overview',this)"><span class="sb-dot" style="background:#5aaff0"></span>Overview</div>
+    <div class="sb-item" onclick="nav('sites',this)"><span class="sb-dot" style="background:#22c55e"></span>Per Site</div>
+    <div class="sb-item" onclick="nav('mpp',this)"><span class="sb-dot" style="background:#f59c1a"></span>MPP</div>
+    <div class="sb-item" onclick="nav('insight',this)"><span class="sb-dot" style="background:#7c3aed"></span>Insight</div>
+    <div class="sb-item" onclick="nav('map',this)"><span class="sb-dot" style="background:#ef4444"></span>Peta</div>
   </div>
-
-  <div class="nav-menu">
-    <button class="nav-btn active" onclick="showPage('overview')">Overview</button>
-    <button class="nav-btn" onclick="showPage('mpp')">MPP</button>
-    <button class="nav-btn" onclick="showPage('map')">Peta</button>
+  <div class="sb-sec">
+    <div class="sb-lbl">Sites</div>
+    <div class="sb-item" onclick="setSite('all',this)"><span class="sb-sq" style="background:#5aaff0"></span>Semua Site<span class="sb-badge">12</span></div>
   </div>
-
-  <div id="page-overview" class="page active">
-    <div class="kpi-grid" id="kpiGrid"><div class="loading">Loading...</div></div>
-    <div class="card">
-      <div class="card-header">📋 Ringkasan per Site</div>
-      <div style="overflow-x:auto"><table id="summaryTable"><thead><tr><th>Site</th><th>Tipe</th><th class="r">Trip</th><th class="r">DO/Trip</th><th class="r">Insentif</th><th class="r">High</th><th class="r">Mid</th><th class="r">Low</th></tr></thead><tbody id="summaryBody"></tbody></table></div>
+  <div class="sb-sec">
+    <div class="sb-lbl">NDC</div>
+    <div class="sb-item" onclick="setSite('ndc',this)"><span class="sb-sq" style="background:#60a5fa"></span>NDC<span class="sb-badge">3</span></div>
+    <div class="sb-child" onclick="setSite('JBBK',this)"><span class="cd"></span>Jababeka</div>
+    <div class="sb-child" onclick="setSite('CKP',this)"><span class="cd"></span>Cikupa</div>
+    <div class="sb-child" onclick="setSite('SDA',this)"><span class="cd"></span>Sidoarjo</div>
+  </div>
+  <div class="sb-sec">
+    <div class="sb-lbl">Hub</div>
+    <div class="sb-item" onclick="setSite('hub',this)"><span class="sb-sq" style="background:#4ade80"></span>HUB<span class="sb-badge">9</span></div>
+    <div class="sb-child" onclick="setSite('Hub Bogor',this)"><span class="cd"></span>Hub Bogor</div>
+    <div class="sb-child" onclick="setSite('Hub Tangerang',this)"><span class="cd"></span>Hub Tangerang</div>
+    <div class="sb-child" onclick="setSite('Hub Utara',this)"><span class="cd"></span>Hub Utara</div>
+    <div class="sb-child" onclick="setSite('Hub Bandung',this)"><span class="cd"></span>Hub Bandung</div>
+    <div class="sb-child" onclick="setSite('Hub Yogya',this)"><span class="cd"></span>Hub Yogya</div>
+    <div class="sb-child" onclick="setSite('Hub Semarang',this)"><span class="cd"></span>Hub Semarang</div>
+    <div class="sb-child" onclick="setSite('Hub Lampung',this)"><span class="cd"></span>Hub Lampung</div>
+    <div class="sb-child" onclick="setSite('Hub Palembang',this)"><span class="cd"></span>Hub Palembang</div>
+    <div class="sb-child" onclick="setSite('Hub Kediri',this)"><span class="cd"></span>Hub Kediri</div>
+  </div>
+</nav>
+<div class="main">
+  <div class="topbar">
+    <div class="pg-title" id="pgTitle">Overview</div>
+    <div class="chips">
+      <div class="tg"><button class="tgb active" onclick="setView('fm',this)">Full Month</button><button class="tgb" onclick="setView('mtd',this)">MTD</button></div>
+      <select id="monthSel" onchange="renderAll()"><option value="all">Semua Bulan</option></select>
+      <div class="chip site" id="siteChip">Semua Site</div>
+      <div class="chip time" id="clkChip">--:--</div>
+      <div class="chip" id="updChip">Loading...</div>
+      <button class="rbtn" onclick="loadData()">↻ Refresh</button>
     </div>
   </div>
-
-  <div id="page-mpp" class="page">
-    <div class="card"><div class="card-header">👥 Daftar MPP</div><div style="overflow-x:auto"><table id="mppTable"><thead><tr><th>Nama</th><th>Role</th><th>Site</th><th>Bulan</th><th class="r">Insentif</th><th>Kategori</th></tr></thead><tbody id="mppBody"></tbody></table></div></div>
+  <div class="content">
+    <div id="pg-overview" class="page active">
+      <div class="kpi5" id="kpi-ov"></div>
+      <div class="tcard"><div class="tc-title">📋 Ringkasan per Site</div><div class="tbl-wrap"><table id="summaryTable"><thead><tr><th>Site</th><th>Tipe</th><th class="r">Trip</th><th class="r">DO/Trip</th><th class="r">UJP/Trip</th><th class="r">Insentif</th></table></thead><tbody id="summaryBody"></tbody></table></div></div>
+    </div>
+    <div id="pg-sites" class="page">
+      <div class="tcard"><div class="tc-title">🏭 Produktivitas per Site</div><div class="tbl-wrap"><table id="sitesTable"><thead><tr><th>#</th><th>Site</th><th>Tipe</th><th class="r">Trip</th><th class="r">DO/Trip</th><th class="r">DP/Trip</th><th class="r">UJP/Trip</th><th class="r">Insentif</th></tr></thead><tbody id="sitesBody"></tbody></table></div></div>
+    </div>
+    <div id="pg-mpp" class="page">
+      <div class="kpi5" id="kpi-mpp"></div>
+      <div class="tcard"><div class="tc-title">👥 Daftar MPP</div><div class="filter-group" id="mppFilters"><button class="cf active" onclick="setMppCat('all',this)">Semua</button><button class="cf" onclick="setMppCat('High',this)">High >1.5M</button><button class="cf" onclick="setMppCat('Mid',this)">Mid 500K-1.5M</button><button class="cf" onclick="setMppCat('Low',this)">Low <500K</button></div><div class="tbl-wrap"><table id="mppTable"><thead><tr><th>#</th><th>Nama</th><th>Role</th><th>Site</th><th>Bulan</th><th class="r">Insentif</th><th>Kategori</th></tr></thead><tbody id="mppBody"></tbody></table></div><div class="pager" id="mppPager"></div></div>
+    </div>
+    <div id="pg-insight" class="page"><div class="tcard"><div class="tc-title">📈 Insight Perbandingan (MoM)</div><div id="insightBody"></div></div></div>
+    <div id="pg-map" class="page"><div class="tcard"><div class="tc-title">🗺️ Sebaran Site</div><div id="map" class="map-wrap"></div></div></div>
   </div>
-
-  <div id="page-map" class="page"><div class="card"><div class="card-header">🗺️ Sebaran Site</div><div id="map" class="map-container"></div></div></div>
+</div>
 </div>
 
 <script>
-// ==================== URL GSHEET LO (LANGSUNG) ====================
+// ==================== URL GSHEET LO ====================
 const URL_2026 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQyI8mksdqrv4RF0OBH_Hi2BdZ17fYNBU2_scPnUFb0EkI8QFFRwTEpJtoQvKoXJQaWUoGC7bOhGtB1/pub?output=csv';
-const URL_2025 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSfY4FSedZDglBnuz8UWZXdhg9LJGDKcAjGEYENyL8rTXAqguTTqZL0IQfwhC0KGFh_8POa0oqM8KMf/pub?output=csv';
-// =================================================================
+// ===================================================
 
-let SITE_2026 = {};
-let SITE_2025 = {};
-let ALL_MPP = [];
+// Mapping Area ke Site (lo bisa tambahin sendiri)
+const AREA_TO_SITE = {
+  'BEKASI': 'JBBK',
+  'JAKARTA SELATAN': 'JBBK',
+  'JAKARTA PUSAT': 'JBBK',
+  'Bogor Kabupaten': 'Hub Bogor',
+  'BOGOR': 'Hub Bogor',
+  'PURWAKARTA': 'JBBK',
+  'TANGERANG': 'Hub Tangerang',
+  'Karawang Selat': 'JBBK',
+  'DEPOK': 'JBBK'
+};
+
+let RAW_DATA = [];
+let SITE_AGG = {};
+let MPP_LIST = [];
 let currentSite = 'all';
 let currentMonth = 'all';
+let currentView = 'fm';
 let availableMonths = [];
 let mapInstance = null;
 
@@ -97,107 +173,98 @@ const SITE_COORDS = {'JBBK':{lat:-6.3644,lng:107.1570},'CKP':{lat:-6.2297,lng:10
 function parseCSV(csv) {
   const lines = csv.trim().split('\n');
   if(lines.length<2) return [];
-  const headers = lines[0].split(',').map(h=>h.trim());
+  const headers = lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,''));
   return lines.slice(1).map(line=>{
-    const values = [];
-    let inQuote=false, curr='';
-    for(let i=0;i<line.length;i++){
-      const c=line[i];
-      if(c==='"') inQuote=!inQuote;
-      else if(c===',' && !inQuote){ values.push(curr); curr=''; }
-      else curr+=c;
-    }
-    values.push(curr);
+    const vals=[], row=[], inQuote=false, curr=[];
+    for(let i=0;i<line.length;i++){let c=line[i];if(c==='"')inQuote=!inQuote;else if(c===','&&!inQuote){vals.push(curr.join(''));curr=[];}else curr.push(c);}
+    vals.push(curr.join(''));
     const obj={};
-    headers.forEach((h,i)=>obj[h]=values[i]?.trim()||'');
+    headers.forEach((h,i)=>obj[h]=vals[i]?.trim()||'');
     return obj;
   });
 }
 
 async function loadData() {
-  const status = document.getElementById('statusLabel');
-  status.innerHTML = '🔄 Loading data...';
+  const upd = document.getElementById('updChip');
+  upd.innerHTML = '🔄 Loading...';
   try {
-    const [res26, res25] = await Promise.all([fetch(URL_2026), fetch(URL_2025)]);
-    const csv26 = await res26.text();
-    const csv25 = await res25.text();
-    const data26 = parseCSV(csv26);
-    const data25 = parseCSV(csv25);
+    const res = await fetch(URL_2026);
+    const csv = await res.text();
+    RAW_DATA = parseCSV(csv);
     
-    SITE_2026 = {};
+    // Agregasi per site & per bulan
+    SITE_AGG = {};
+    MPP_LIST = [];
     const monthSet = new Set();
-    data26.forEach(row => {
-      const site = row.site, month = row.month;
-      if(!site||!month) return;
-      monthSet.add(month);
-      if(!SITE_2026[site]) SITE_2026[site] = {};
-      SITE_2026[site][month] = {
-        trips: parseInt(row.trips)||0, do_: parseFloat(row.do_)||0, dp: parseInt(row.dp)||0,
-        ujp: parseFloat(row.ujp)||0, ins: parseFloat(row.ins)||0,
-        mpp_low: parseInt(row.mpp_low)||0, mpp_mid: parseInt(row.mpp_mid)||0, mpp_high: parseInt(row.mpp_high)||0
-      };
+    
+    RAW_DATA.forEach(row => {
+      const tgl = row.Tanggal;
+      if(!tgl) return;
+      const date = new Date(tgl);
+      const month = date.toLocaleString('en', {month:'long'});
+      const year = date.getFullYear();
+      const monthKey = `${month} ${year}`;
+      monthSet.add(monthKey);
+      
+      let area = row.Area || '';
+      let site = AREA_TO_SITE[area] || area;
+      if(!site || site==='') site = 'Others';
+      
+      const doVal = parseInt(row.Jumlah_do) || 0;
+      const titik = parseInt(row.jumlah_titik) || 0;
+      const ujp = parseFloat(row.UJP) || 0;
+      const insMPP = parseFloat(row['Insentif per MPP']?.replace(/,/g,'')) || 0;
+      
+      if(!SITE_AGG[site]) SITE_AGG[site] = {};
+      if(!SITE_AGG[site][monthKey]) SITE_AGG[site][monthKey] = { trips:0, do_:0, dp:0, ujp:0, ins:0, mpp:[] };
+      
+      SITE_AGG[site][monthKey].trips += 1;
+      SITE_AGG[site][monthKey].do_ += doVal;
+      SITE_AGG[site][monthKey].dp += titik;
+      SITE_AGG[site][monthKey].ujp += ujp;
+      SITE_AGG[site][monthKey].ins += insMPP;
+      
+      // MPP: driver & kenek
+      const driver = row.driver;
+      const kenek = row.kenek1;
+      if(driver && driver !== 'DUMMY CUSTOMER') {
+        MPP_LIST.push({ name: driver, role: 'Driver', site: site, month: monthKey, ins: insMPP });
+      }
+      if(kenek && kenek !== 'DUMMY CUSTOMER') {
+        MPP_LIST.push({ name: kenek, role: 'Kenek', site: site, month: monthKey, ins: insMPP });
+      }
     });
     
-    SITE_2025 = {};
-    data25.forEach(row => {
-      const site = row.site, month = row.month;
-      if(!site||!month) return;
-      if(!SITE_2025[site]) SITE_2025[site] = {};
-      SITE_2025[site][month] = {
-        trips: parseInt(row.trips)||0, do_: parseFloat(row.do_)||0, dp: parseInt(row.dp)||0,
-        ujp: parseFloat(row.ujp)||0, ins: parseFloat(row.ins)||0,
-        mpp_low: parseInt(row.mpp_low)||0, mpp_mid: parseInt(row.mpp_mid)||0, mpp_high: parseInt(row.mpp_high)||0
-      };
-    });
+    availableMonths = Array.from(monthSet).sort((a,b)=>new Date(a)-new Date(b));
+    const sel = document.getElementById('monthSel');
+    sel.innerHTML = '<option value="all">Semua Bulan</option>'+availableMonths.map(m=>`<option value="${m}">${m}</option>`).join('');
     
-    const monthOrder = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    availableMonths = Array.from(monthSet).sort((a,b)=>monthOrder.indexOf(a)-monthOrder.indexOf(b));
-    const monthSelect = document.getElementById('monthSelect');
-    monthSelect.innerHTML = '<option value="all">Semua Bulan</option>'+availableMonths.map(m=>`<option value="${m}">${m}</option>`).join('');
-    
-    // Buat ALL_MPP dari data 2026
-    ALL_MPP = [];
-    data26.forEach(row => {
-      const ins = parseFloat(row.ins)||0;
-      let cat = 'Low';
-      if(ins>1500000) cat='High';
-      else if(ins>500000) cat='Mid';
-      ALL_MPP.push({
-        name: row.name || 'Unknown',
-        role: row.role || 'Driver',
-        site: row.site || '',
-        month: row.month || '',
-        ins: ins,
-        cat: cat
-      });
-    });
-    
-    status.innerHTML = `✅ ${Object.keys(SITE_2026).length} site · ${ALL_MPP.length} MPP · ${new Date().toLocaleString()}`;
+    const siteCount = Object.keys(SITE_AGG).length;
+    upd.innerHTML = `✅ ${siteCount} site · ${MPP_LIST.length} MPP · ${new Date().toLocaleString()}`;
     renderAll();
     renderMap();
-  } catch(e) {
-    status.innerHTML = '❌ Gagal load data! Cek koneksi';
-    console.error(e);
-  }
+  } catch(e) { upd.innerHTML = '❌ Gagal load!'; console.error(e); }
 }
 
 function getSites() {
-  if(currentSite==='all') return AK;
-  if(currentSite==='ndc') return NK;
-  if(currentSite==='hub') return HK;
+  if(currentSite==='all') return AK.filter(s=>SITE_AGG[s]);
+  if(currentSite==='ndc') return NK.filter(s=>SITE_AGG[s]);
+  if(currentSite==='hub') return HK.filter(s=>SITE_AGG[s]);
   return [currentSite];
 }
-function getMonths() { return currentMonth==='all' ? availableMonths : [currentMonth]; }
+function getMonths() {
+  if(currentView==='mtd') return availableMonths.length?[availableMonths[availableMonths.length-1]]:[];
+  return currentMonth==='all'?availableMonths:[currentMonth];
+}
 
 function agg(sites, months) {
-  let trips=0,do_=0,dp=0,ujp=0,ins=0,ml=0,mm=0,mh=0;
+  let trips=0,do_=0,dp=0,ujp=0,ins=0;
   sites.forEach(s=>months.forEach(m=>{
-    const d = SITE_2026[s]?.[m];
+    const d = SITE_AGG[s]?.[m];
     if(!d) return;
     trips+=d.trips; do_+=d.do_; dp+=d.dp; ujp+=d.ujp; ins+=d.ins;
-    ml+=d.mpp_low; mm+=d.mpp_mid; mh+=d.mpp_high;
   }));
-  return {trips,do_,dp,ujp,ins,ml,mm,mh};
+  return {trips,do_,dp,ujp,ins};
 }
 
 function fmt(n) {
@@ -207,26 +274,75 @@ function fmt(n) {
   if(n>=1e3) return Math.round(n/1e3)+'K';
   return Math.round(n).toLocaleString();
 }
+function fmtN(n){return Math.round(n).toLocaleString();}
 
 function renderKPI() {
   const d = agg(getSites(), getMonths());
-  document.getElementById('kpiGrid').innerHTML = `
-    <div class="kpi-card" style="border-top-color:#023188"><div class="kpi-label">Total Trip</div><div class="kpi-value">${d.trips.toLocaleString()}</div><div class="kpi-sub">${getSites().length} site</div></div>
-    <div class="kpi-card" style="border-top-color:#023188"><div class="kpi-label">Total DO</div><div class="kpi-value">${d.do_.toLocaleString()}</div></div>
-    <div class="kpi-card" style="border-top-color:#023188"><div class="kpi-label">Drop Point</div><div class="kpi-value">${d.dp.toLocaleString()}</div></div>
-    <div class="kpi-card" style="border-top-color:#f59c1a"><div class="kpi-label">Total UJP</div><div class="kpi-value">${fmt(d.ujp)}</div></div>
-    <div class="kpi-card" style="border-top-color:#22c55e"><div class="kpi-label">Total Insentif</div><div class="kpi-value">${fmt(d.ins)}</div></div>
+  document.getElementById('kpi-ov').innerHTML = `
+    <div class="kpi k-b"><div class="kpi-lbl">Total Trip</div><div class="kpi-val">${fmtN(d.trips)}</div><div class="kpi-sub">${getSites().length} site</div></div>
+    <div class="kpi k-b"><div class="kpi-lbl">Total DO</div><div class="kpi-val">${fmtN(d.do_)}</div></div>
+    <div class="kpi k-b"><div class="kpi-lbl">Drop Point</div><div class="kpi-val">${fmtN(d.dp)}</div></div>
+    <div class="kpi k-a"><div class="kpi-lbl">Total UJP</div><div class="kpi-val">${fmt(d.ujp)}</div></div>
+    <div class="kpi k-g"><div class="kpi-lbl">Total Insentif</div><div class="kpi-val">${fmt(d.ins)}</div></div>
   `;
 }
 
 function renderSummary() {
   const rows = getSites().map(s=>({s,d:agg([s],getMonths()),type:NK.includes(s)?'NDC':'Hub'})).filter(r=>r.d.trips>0).sort((a,b)=>b.d.ins-a.d.ins);
-  document.getElementById('summaryBody').innerHTML = rows.map(r=>`<tr><td style="color:${SITE_COLORS[r.s]}">${SITE_NAMES[r.s]}</td><td><span class="${r.type==='NDC'?'badge-ndc':'badge-hub'}">${r.type}</span></td><td class="r">${r.d.trips.toLocaleString()}</td><td class="r">${r.d.trips?(r.d.do_/r.d.trips).toFixed(1):'-'}</td><td class="r">${fmt(r.d.ins)}</td><td class="r" style="color:#15803d">${r.d.mh}</td><td class="r" style="color:#a16207">${r.d.mm}</td><td class="r" style="color:#dc2626">${r.d.ml}</td></tr>`).join('');
+  document.getElementById('summaryBody').innerHTML = rows.map(r=>`<tr><td style="color:${SITE_COLORS[r.s]}">${SITE_NAMES[r.s]}</td><td><span class="${r.type==='NDC'?'bdg-ndc':'bdg-hub'}">${r.type}</span></td><td class="r">${fmtN(r.d.trips)}</td><td class="r">${r.d.trips?(r.d.do_/r.d.trips).toFixed(1):'-'}</td><td class="r">${r.d.trips?fmt(r.d.ujp/r.d.trips):'-'}</td><td class="r">${fmt(r.d.ins)}</td></tr>`).join('');
 }
 
-function renderMPP() {
-  const filtered = ALL_MPP.filter(m=>getSites().includes(m.site) && getMonths().includes(m.month)).sort((a,b)=>b.ins-a.ins);
-  document.getElementById('mppBody').innerHTML = filtered.slice(0,200).map(r=>`<tr><td>${r.name}</td><td>${r.role}</td><td>${SITE_NAMES[r.site]||r.site}</td><td>${r.month}</td><td class="r">Rp ${r.ins.toLocaleString()}</td><td><span style="background:${r.cat==='High'?'#dcfce7':(r.cat==='Mid'?'#fef9c3':'#fee2e2')};padding:2px 8px;border-radius:12px">${r.cat}</span></td></tr>`).join('');
+function renderSites() {
+  const rows = getSites().map(s=>({s,d:agg([s],getMonths()),type:NK.includes(s)?'NDC':'Hub'})).filter(r=>r.d.trips>0).sort((a,b)=>b.d.ins-a.d.ins);
+  document.getElementById('sitesBody').innerHTML = rows.map((r,i)=>`<tr><td style="color:#94a3b8">${i+1}</td><td style="color:${SITE_COLORS[r.s]}">${SITE_NAMES[r.s]}</td><td><span class="${r.type==='NDC'?'bdg-ndc':'bdg-hub'}">${r.type}</span></td><td class="r">${fmtN(r.d.trips)}</td><td class="r">${r.d.trips?(r.d.do_/r.d.trips).toFixed(1):'-'}</td><td class="r">${r.d.trips?(r.d.dp/r.d.trips).toFixed(1):'-'}</td><td class="r">${r.d.trips?fmt(r.d.ujp/r.d.trips):'-'}</td><td class="r">${fmt(r.d.ins)}</td></tr>`).join('');
+}
+
+function renderMppKpi() {
+  const d = agg(getSites(), getMonths());
+  const high = MPP_LIST.filter(m=>getSites().includes(m.site) && getMonths().includes(m.month) && m.ins>1500000).length;
+  const mid = MPP_LIST.filter(m=>getSites().includes(m.site) && getMonths().includes(m.month) && m.ins>500000 && m.ins<=1500000).length;
+  const low = MPP_LIST.filter(m=>getSites().includes(m.site) && getMonths().includes(m.month) && m.ins<=500000).length;
+  document.getElementById('kpi-mpp').innerHTML = `
+    <div class="kpi k-g"><div class="kpi-lbl">High >1.5M</div><div class="kpi-val">${high}</div></div>
+    <div class="kpi k-a"><div class="kpi-lbl">Mid 500K-1.5M</div><div class="kpi-val">${mid}</div></div>
+    <div class="kpi k-r"><div class="kpi-lbl">Low <500K</div><div class="kpi-val">${low}</div></div>
+    <div class="kpi k-b"><div class="kpi-lbl">Total MPP</div><div class="kpi-val">${high+mid+low}</div></div>
+  `;
+}
+
+let mppCat = 'all';
+let mppPage = 1;
+const MPP_SIZE = 50;
+
+function renderMpp() {
+  let filtered = MPP_LIST.filter(m=>getSites().includes(m.site) && getMonths().includes(m.month));
+  if(mppCat!=='all') {
+    if(mppCat==='High') filtered = filtered.filter(m=>m.ins>1500000);
+    else if(mppCat==='Mid') filtered = filtered.filter(m=>m.ins>500000 && m.ins<=1500000);
+    else filtered = filtered.filter(m=>m.ins<=500000);
+  }
+  filtered.sort((a,b)=>b.ins-a.ins);
+  const total = filtered.length, totalPage = Math.ceil(total/MPP_SIZE);
+  if(mppPage>totalPage) mppPage=1;
+  const start = (mppPage-1)*MPP_SIZE;
+  document.getElementById('mppBody').innerHTML = filtered.slice(start,start+MPP_SIZE).map((r,i)=>`<tr><td style="color:#94a3b8">${start+i+1}</td><td><b>${r.name}</b></td><td>${r.role}</td><td>${SITE_NAMES[r.site]||r.site}</td><td>${r.month}</td><td class="r">${fmt(r.ins)}</td><td><span style="background:${r.ins>1500000?'#dcfce7':(r.ins>500000?'#fef9c3':'#fee2e2')};padding:2px 8px;border-radius:12px">${r.ins>1500000?'High':(r.ins>500000?'Mid':'Low')}</span></td></tr>`).join('');
+  document.getElementById('mppPager').innerHTML = `<button class="pbtn" ${mppPage===1?'disabled':''} onclick="mppGoto(${mppPage-1})">◀ Prev</button> <span>${mppPage}/${totalPage||1}</span> <button class="pbtn" ${mppPage===totalPage||totalPage===0?'disabled':''} onclick="mppGoto(${mppPage+1})">Next ▶</button>`;
+}
+function mppGoto(p){mppPage=p;renderMpp();}
+function setMppCat(cat,btn){mppCat=cat;mppPage=1;document.querySelectorAll('#mppFilters .cf').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');renderMpp();}
+
+function renderInsight() {
+  const months = getMonths();
+  const last = months.length?months[months.length-1]:null;
+  const prev = last?availableMonths[availableMonths.indexOf(last)-1]:null;
+  if(!last) return;
+  const cur = agg(getSites(),[last]);
+  const pre = prev?agg(getSites(),[prev]):null;
+  const momHtml = `<div class="ins-row"><span>Total Trip</span><span>${fmtN(cur.trips)}</span><span>${pre?((cur.trips-pre.trips)/pre.trips*100).toFixed(1)+'%':'-'}</span></div>
+    <div class="ins-row"><span>Total DO</span><span>${fmtN(cur.do_)}</span><span>${pre?((cur.do_-pre.do_)/pre.do_*100).toFixed(1)+'%':'-'}</span></div>
+    <div class="ins-row"><span>Total UJP</span><span>${fmt(cur.ujp)}</span><span>${pre?((cur.ujp-pre.ujp)/pre.ujp*100).toFixed(1)+'%':'-'}</span></div>
+    <div class="ins-row"><span>Insentif</span><span>${fmt(cur.ins)}</span><span>${pre?((cur.ins-pre.ins)/pre.ins*100).toFixed(1)+'%':'-'}</span></div>`;
+  document.getElementById('insightBody').innerHTML = momHtml;
 }
 
 function renderMap() {
@@ -236,33 +352,39 @@ function renderMap() {
     const c=SITE_COORDS[sk]; if(!c) return;
     const d=agg([sk],getMonths());
     L.circleMarker([c.lat,c.lng],{radius:8,fillColor:SITE_COLORS[sk]||'#023188',color:'white',weight:2,fillOpacity:0.8})
-      .bindPopup(`<b>${SITE_NAMES[sk]}</b><br>Trip: ${d.trips.toLocaleString()}<br>Insentif: ${fmt(d.ins)}`).addTo(mapInstance);
+      .bindPopup(`<b>${SITE_NAMES[sk]}</b><br>Trip: ${fmtN(d.trips)}<br>Insentif: ${fmt(d.ins)}`).addTo(mapInstance);
   });
   setTimeout(()=>mapInstance.invalidateSize(),100);
 }
 
-function showPage(p){
-  document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('active'));
-  document.getElementById(`page-${p}`).classList.add('active');
-  document.querySelectorAll('.nav-btn').forEach(btn=>btn.classList.remove('active'));
-  if(event.target.classList) event.target.classList.add('active');
-  if(p==='map' && mapInstance) setTimeout(()=>mapInstance.invalidateSize(),100);
-}
+function renderAll(){ renderKPI(); renderSummary(); renderSites(); renderMppKpi(); renderMpp(); if(document.getElementById('pg-insight').classList.contains('active')) renderInsight(); if(document.getElementById('pg-map').classList.contains('active')) renderMap(); }
 
-function setSite(s,btn){
-  currentSite=s;
-  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+function nav(pg,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pg-'+pg).classList.add('active');
   if(btn)btn.classList.add('active');
-  renderAll();
-  if(document.getElementById('page-map').classList.contains('active')) renderMap();
+  document.getElementById('pgTitle').innerHTML = pg==='overview'?'Overview':pg==='sites'?'Per Site':pg==='mpp'?'MPP':pg==='insight'?'Insight':'Peta';
+  if(pg==='insight') renderInsight();
+  if(pg==='map' && mapInstance) setTimeout(()=>mapInstance.invalidateSize(),100);
 }
-function setMonth(){
-  currentMonth=document.getElementById('monthSelect').value;
+function setSite(s,btn){
+  currentSite=s; mppPage=1;
+  document.querySelectorAll('.sb-item,.sb-child').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  const lbl={'all':'Semua Site','ndc':'NDC','hub':'Hub',JBBK:'Jababeka',CKP:'Cikupa',SDA:'Sidoarjo'};
+  document.getElementById('siteChip').innerHTML = lbl[s]||s;
   renderAll();
-  if(document.getElementById('page-map').classList.contains('active')) renderMap();
 }
-function renderAll(){ renderKPI(); renderSummary(); renderMPP(); }
-
+function setView(v,btn){
+  currentView=v; mppPage=1;
+  document.querySelectorAll('.tgb').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAll();
+}
+function setMonth(){ currentMonth = document.getElementById('monthSel').value; mppPage=1; renderAll(); }
+function tick(){document.getElementById('clkChip').innerHTML=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});}
+tick();setInterval(tick,60000);
 loadData();
 setInterval(loadData, 600000);
 </script>
