@@ -6,8 +6,12 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -22,15 +26,14 @@ jobs:
         run: |
           curl -L "https://docs.google.com/spreadsheets/d/e/2PACX-1vSfY4FSedZDglBnuz8UWZXdhg9LJGDKcAjGEYENyL8rTXAqguTTqZL0IQfwhC0KGFh_8POa0oqM8KMf/pub?output=csv" -o data_2025.csv
       
-      - name: Convert CSV to JSON using npx
+      - name: Convert CSV to JSON
         run: |
           npx csvtojson data_2026.csv > data_2026.json
           npx csvtojson data_2025.csv > data_2025.json
       
       - name: Commit and push
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data_2026.json data_2025.csv data_2025.json
-          git commit -m "Auto update data from GSheet [skip ci]" || echo "No changes"
-          git push
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data_2026.json data_2025.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto update data from GSheet" && git push)
