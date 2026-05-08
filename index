@@ -1744,7 +1744,140 @@ function renderInsight(){
   if(typeof renderDemandTable==='function')renderDemandTable();
   if(typeof buildYoYCharts==='function')setTimeout(()=>buildYoYCharts(sites),100);
 }
+// ==================== FIX: Missing Variables & Functions ====================
 
+// 1. Definisikan PERIOD_CONFIG (digunakan di renderDemandTable)
+const PERIOD_CONFIG = { cutoff_day: 4, partial_months: ['May'] };
+
+// 2. Inisialisasi variabel global untuk map
+let _ldivs = [];
+let _svg = null;
+
+// 3. Fix: buildProdPeriodCharts - fungsi untuk chart di halaman Produktivitas
+function buildProdPeriodCharts() {
+  const sites = getSites();
+  const MLB = ['Jan', 'Feb', 'Mar', 'Apr'];
+  
+  function aggPeriod(months, siteList) {
+    let do_ = 0, dp = 0, trips = 0, ujp = 0, ins = 0;
+    months.forEach(m => {
+      siteList.forEach(s => {
+        const d = SITE_MONTHLY[s]?.[m] || {};
+        trips += d.trips || 0;
+        do_ += d.do_ || 0;
+        dp += d.dp || 0;
+        ujp += d.ujp || 0;
+        ins += d.ins || 0;
+      });
+    });
+    const t = trips || 1;
+    const dpVal = dp || 1;
+    const doVal = do_ || 1;
+    return { 
+      do_, dp, trips, ujp, ins, 
+      doPerTrip: do_/t, 
+      dpPerTrip: dp/t, 
+      ujpPerTrip: ujp/t, 
+      ujpPerDo: ujp/doVal, 
+      ujpPerDp: ujp/dpVal, 
+      doPerDp: do_/dpVal 
+    };
+  }
+
+  const periodLabels = ['Jan-Mar', 'Apr'];
+  const p1 = aggPeriod(['January', 'February', 'March'], sites);
+  const p2 = aggPeriod(['April'], sites);
+  const periodData = [p1, p2];
+
+  const chart1El = document.getElementById('prodChart1');
+  if (chart1El) {
+    if (chart1El._chart) chart1El._chart.destroy();
+    new Chart(chart1El, {
+      type: 'bar',
+      data: {
+        labels: periodLabels,
+        datasets: [
+          { label: 'Demand (DO)', data: periodData.map(d => Math.round(d.do_ / 1000)), backgroundColor: '#023188', borderRadius: 4, yAxisID: 'y' },
+          { label: 'Insentif (Juta)', data: periodData.map(d => +(d.ins / 1e6).toFixed(1)), backgroundColor: '#f59c1a', borderRadius: 4, yAxisID: 'y1' },
+          { label: 'UJP (Miliar)', data: periodData.map(d => +(d.ujp / 1e9).toFixed(2)), backgroundColor: '#22c55e', borderRadius: 4, yAxisID: 'y1' }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { font: { size: 10 } } } },
+        scales: {
+          y: { title: { display: true, text: 'Ribuan DO', font: { size: 9 } }, ticks: { font: { size: 9 } } },
+          y1: { position: 'right', title: { display: true, text: 'Rp (Juta / Miliar)', font: { size: 9 } }, ticks: { font: { size: 9 } }, grid: { drawOnChartArea: false } }
+        }
+      }
+    });
+  }
+
+  const chart2El = document.getElementById('prodChart2');
+  if (chart2El) {
+    if (chart2El._chart) chart2El._chart.destroy();
+    new Chart(chart2El, {
+      type: 'line',
+      data: {
+        labels: MLB,
+        datasets: [
+          { label: 'DO/Trip', data: MLB.map((_, i) => aggPeriod([MONTHS[i]], sites).doPerTrip), borderColor: '#023188', tension: 0.3, fill: false, yAxisID: 'y', pointRadius: 3 },
+          { label: 'DP/Trip', data: MLB.map((_, i) => aggPeriod([MONTHS[i]], sites).dpPerTrip), borderColor: '#f59c1a', tension: 0.3, fill: false, yAxisID: 'y', pointRadius: 3 },
+          { label: 'Trip (x100)', data: MLB.map((_, i) => aggPeriod([MONTHS[i]], sites).trips / 100), borderColor: '#22c55e', tension: 0.3, fill: false, yAxisID: 'y1', pointRadius: 3 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { font: { size: 10 } } } },
+        scales: {
+          y: { title: { display: true, text: 'Rasio', font: { size: 9 } }, ticks: { font: { size: 9 } } },
+          y1: { position: 'right', title: { display: true, text: 'Trip (ratusan)', font: { size: 9 } }, ticks: { font: { size: 9 } }, grid: { drawOnChartArea: false } }
+        }
+      }
+    });
+  }
+
+  const chart3El = document.getElementById('prodChart3');
+  if (chart3El) {
+    if (chart3El._chart) chart3El._chart.destroy();
+    new Chart(chart3El, {
+      type: 'line',
+      data: {
+        labels: MLB,
+        datasets: [
+          { label: 'UJP/Trip (Ribu)', data: MLB.map((_, i) => aggPeriod([MONTHS[i]], sites).ujpPerTrip / 1000), borderColor: '#7c3aed', tension: 0.3, fill: false, yAxisID: 'y', pointRadius: 3 },
+          { label: 'UJP/DP (Ribu)', data: MLB.map((_, i) => aggPeriod([MONTHS[i]], sites).ujpPerDp / 1000), borderColor: '#ef4444', tension: 0.3, fill: false, yAxisID: 'y', pointRadius: 3 },
+          { label: 'Insentif (Juta)', data: MLB.map((_, i) => aggPeriod([MONTHS[i]], sites).ins / 1e6), borderColor: '#f59c1a', tension: 0.3, fill: false, yAxisID: 'y1', pointRadius: 3 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { font: { size: 10 } } } },
+        scales: {
+          y: { title: { display: true, text: 'UJP (Ribu Rp)', font: { size: 9 } }, ticks: { font: { size: 9 } } },
+          y1: { position: 'right', title: { display: true, text: 'Insentif (Juta)', font: { size: 9 } }, ticks: { font: { size: 9 } }, grid: { drawOnChartArea: false } }
+        }
+      }
+    });
+  }
+}
+
+Chart.register(ChartDataLabels);
+
+// Init: ensure FM starts with all months
+document.getElementById('monthSel').value='all';
+document.getElementById('monthSel').value='all';
+renderAll();
+setTimeout(()=>{
+  if(typeof L!=='undefined'){_initMap();}
+  else{setTimeout(_initMap,1000);}
+},500);
+</script>
+</body>
+</html>
 Chart.register(ChartDataLabels);
 
 // Init: ensure FM starts with all months
