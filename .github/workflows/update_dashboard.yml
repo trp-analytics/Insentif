@@ -1,0 +1,40 @@
+name: Update Dashboard Insentif
+
+on:
+  workflow_dispatch:
+    inputs:
+      notes:
+        description: 'Catatan update (opsional)'
+        required: false
+        default: 'Update data terbaru'
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install gspread google-auth openpyxl
+
+      - name: Run extraction script
+        env:
+          GDRIVE_CREDENTIALS: ${{ secrets.GDRIVE_CREDENTIALS }}
+          SHEET_ID_2026: ${{ secrets.SHEET_ID_2026 }}
+          SHEET_ID_2025: ${{ secrets.SHEET_ID_2025 }}
+        run: python scripts/extract_data.py
+
+      - name: Commit & push updated HTML
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add dashboard_insentif_2026.html
+          git diff --cached --quiet || git commit -m "🔄 Auto-update dashboard — ${{ github.event.inputs.notes }} [$(date '+%d %b %Y %H:%M WIB' -d '+7 hours')]"
+          git push
