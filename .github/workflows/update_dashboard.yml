@@ -1,6 +1,8 @@
 name: Update Dashboard Insentif
 
 on:
+  schedule:
+    - cron: '0 1 * * 1'  # Senin 08.00 WIB (UTC+7)
   workflow_dispatch:
     inputs:
       notes:
@@ -38,5 +40,5 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add dashboard_insentif_2026.html
-          git diff --cached --quiet || git commit -m "🔄 Auto-update dashboard — ${{ github.event.inputs.notes }} [$(date '+%d %b %Y %H:%M WIB' -d '+7 hours')]"
+          git diff --cached --quiet || git commit -m "🔄 Auto-update dashboard [$(date '+%d %b %Y %H:%M WIB' -d '+7 hours')]"
           git push
