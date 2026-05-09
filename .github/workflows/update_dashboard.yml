@@ -2,7 +2,7 @@ name: Update Dashboard Insentif
 
 on:
   schedule:
-    - cron: '0 1 * * 1'  # Senin 08.00 WIB (UTC+7)
+    - cron: '0 1 */2 * *'  # setiap 2 hari sekali jam 08.00 WIB
   workflow_dispatch:
     inputs:
       notes:
