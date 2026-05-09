@@ -1,6 +1,7 @@
 """
 extract_data.py
 Ekstrak data dari Google Sheets → update HTML dashboard insentif.
+Auto-detect bulan aktif dan partial months dari data sheet.
 
 Dijalankan oleh GitHub Actions. Butuh env vars:
   GDRIVE_CREDENTIALS : JSON service account key (dari GitHub Secrets)
@@ -10,23 +11,24 @@ Dijalankan oleh GitHub Actions. Butuh env vars:
 
 import os, json, re
 from collections import defaultdict
+from datetime import datetime, timezone, timedelta
 
 import gspread
 from google.oauth2.service_account import Credentials
 
-# ── Config ──────────────────────────────────────────────────────────────────
+# ── Config ───────────────────────────────────────────────────────────────────
 
 SITES_26 = [
     'JBBK','CKP','SDA',
     'Hub Bogor','Hub Tangerang','Hub Utara','Hub Bandung',
     'Hub Yogya','Hub Semarang','Hub Lampung','Hub Palembang','Hub Kediri'
 ]
-SITES_25 = ['JBBK','CKP','SDA']   # 2025 hanya NDC
-MONTHS   = ['January','February','March','April','May']
+SITES_25 = ['JBBK','CKP','SDA']
 
-# Bulan parsial — update setiap bulan baru masuk
-# key: nama bulan, value: hari cutoff MTD
-PARTIAL_MONTHS = {'May': 4}
+MONTH_ORDER = [
+    'January','February','March','April','May','June',
+    'July','August','September','October','November','December'
+]
 
 SCOPES = [
     'https://www.googleapis.com/auth/spreadsheets.readonly',
@@ -35,7 +37,81 @@ SCOPES = [
 
 HTML_PATH = 'dashboard_insentif_2026.html'
 
-# ── Auth Google Sheets ───────────────────────────────────────────────────────
+# ── Auto-detect months dari sheet ────────────────────────────────────────────
+
+def detect_months_and_partial(wb, sites):
+    """
+    Baca semua nilai kolom 'Month Rev' dari semua sheet,
+    lalu tentukan:
+      - MONTHS: semua bulan yang ada (sorted by MONTH_ORDER)
+      - PARTIAL_MONTHS: bulan terakhir + cutoff day (hari max yang ada di data)
+    """
+    wib = timezone(timedelta(hours=7))
+    today = datetime.now(wib)
+    current_month = today.strftime('%B')   # e.g. 'May'
+    current_day   = today.day
+
+    month_set = set()
+    # Untuk partial: cari max tanggal di bulan terakhir
+    # Kolom tanggal bisa 'Tanggal', 'Date', 'date', 'tgl' — coba semua
+    date_col_candidates = ['Tanggal','tanggal','Date','date','Tgl','tgl','Transaction Date']
+
+    month_maxday = defaultdict(int)
+
+    for site in sites:
+        try:
+            ws = wb.worksheet(site)
+            all_rows = ws.get_all_values()
+            if not all_rows: continue
+            headers = all_rows[0]
+
+            ci_month = -1
+            ci_date  = -1
+            for i, h in enumerate(headers):
+                if str(h).strip() == 'Month Rev':
+                    ci_month = i
+                for dc in date_col_candidates:
+                    if str(h).strip() == dc:
+                        ci_date = i
+
+            for row in all_rows[1:]:
+                m = row[ci_month].strip() if ci_month >= 0 and ci_month < len(row) else ''
+                if m in MONTH_ORDER:
+                    month_set.add(m)
+                    # Coba extract hari dari kolom tanggal
+                    if ci_date >= 0 and ci_date < len(row):
+                        raw = str(row[ci_date]).strip()
+                        for fmt in ('%d/%m/%Y','%Y-%m-%d','%d-%m-%Y','%m/%d/%Y'):
+                            try:
+                                d = datetime.strptime(raw, fmt)
+                                month_maxday[m] = max(month_maxday[m], d.day)
+                                break
+                            except: pass
+        except Exception as e:
+            print(f'  [detect] {site} skip: {e}')
+            continue
+
+    if not month_set:
+        # Fallback: pakai bulan saat ini
+        month_set = {current_month}
+
+    months = sorted(month_set, key=lambda m: MONTH_ORDER.index(m))
+
+    # Tentukan partial months:
+    # Bulan dianggap partial kalau == bulan sekarang di tahun ini
+    partial_months = {}
+    last_month = months[-1]
+    if last_month == current_month:
+        # Cutoff = max day yang ada di data, atau hari ini kalau tidak ada kolom tanggal
+        cutoff = month_maxday.get(last_month, current_day)
+        partial_months[last_month] = cutoff
+
+    print(f'\n📅 Auto-detect: MONTHS={months}')
+    print(f'📅 PARTIAL_MONTHS={partial_months}')
+    return months, partial_months
+
+
+# ── Auth ─────────────────────────────────────────────────────────────────────
 
 def get_gc():
     creds_json = os.environ['GDRIVE_CREDENTIALS']
@@ -47,7 +123,6 @@ def get_gc():
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 def col_idx(headers, name):
-    """Return 0-based index of column by name, -1 if not found."""
     for i, h in enumerate(headers):
         if str(h).strip() == name:
             return i
@@ -56,24 +131,21 @@ def col_idx(headers, name):
 def to_num(v):
     if v in (None, '', 'None'): return 0.0
     try:
-        return float(str(v).replace(',', '').replace(' ', ''))
+        return float(str(v).replace(',','').replace(' ',''))
     except:
         return 0.0
 
 def empty_month():
-    return {
-        'trips': 0, 'do_': 0, 'dp': 0, 'ujp': 0, 'ins': 0,
-        'mpp_low': 0, 'mpp_mid': 0, 'mpp_high': 0
-    }
+    return {'trips':0,'do_':0,'dp':0,'ujp':0,'ins':0,
+            'mpp_low':0,'mpp_mid':0,'mpp_high':0}
 
 
 # ── Extraction ───────────────────────────────────────────────────────────────
 
 def extract_sheet(ws, site, months, sm, mpp_raw):
-    """Extract one worksheet into sm[site][month] dict."""
     all_rows = ws.get_all_values()
     if not all_rows:
-        print(f"  [SKIP] {site} — sheet kosong")
+        print(f'  [SKIP] {site} — kosong')
         return
 
     headers = all_rows[0]
@@ -96,21 +168,18 @@ def extract_sheet(ws, site, months, sm, mpp_raw):
     mpp_info  = {}
 
     for row in all_rows[1:]:
-        def g(c): return row[c] if c >= 0 and c < len(row) else ''
+        def g(c): return row[c] if 0 <= c < len(row) else ''
 
         m = str(g(ci['month'])).strip()
-        if m not in months:
-            continue
+        if m not in months: continue
 
-        drv = str(g(ci['driver'])).strip()
+        drv       = str(g(ci['driver'])).strip()
         is_dummy  = 'DUMMY' in drv.upper()
         lc_raw    = str(g(ci['lc'])).strip()
-        lc_empty  = not lc_raw or lc_raw in ('', 'None', '#N/A')
-        has_driver = bool(drv and drv.upper() not in ('', 'NONE'))
+        lc_empty  = not lc_raw or lc_raw in ('','None','#N/A')
+        has_driver = bool(drv and drv.upper() not in ('','NONE'))
 
-        # Row inclusion rule
-        if lc_empty and not has_driver:
-            continue
+        if lc_empty and not has_driver: continue
 
         monthly[m]['trips'] += 1
         monthly[m]['do_']   += to_num(g(ci['do']))
@@ -118,161 +187,125 @@ def extract_sheet(ws, site, months, sm, mpp_raw):
         monthly[m]['ujp']   += to_num(g(ci['ujp']))
         monthly[m]['ins']   += to_num(g(ci['ins']))
 
-        if is_dummy or lc_empty:
-            continue
-
+        if is_dummy or lc_empty: continue
         ins_mpp = to_num(g(ci['insmpp']))
-        if ins_mpp <= 0:
-            continue
+        if ins_mpp <= 0: continue
 
         for nik_ci, name_ci in [(ci['nik1'], ci['driver']), (ci['nik2'], ci['kenek'])]:
             nik  = str(g(nik_ci)).strip()
             name = str(g(name_ci)).strip()
-            if not nik or nik in ('None', '999999', ''):
-                continue
-            if 'DUMMY' in name.upper():
-                continue
+            if not nik or nik in ('None','999999',''): continue
+            if 'DUMMY' in name.upper(): continue
             mpp_month[nik][m] += ins_mpp
             if nik not in mpp_info:
                 mpp_info[nik] = {'name': name, 'site': site}
 
-    # Finalize monthly
     sm[site] = {m: dict(v) for m, v in monthly.items()}
-
-    # Aggregate mpp_raw for mpp_low/mid/high
     for nik, info in mpp_info.items():
         if nik not in mpp_raw:
             mpp_raw[nik] = {'name': info['name'], 'site': site, 'months': {}}
         for mo, ins in mpp_month[nik].items():
             mpp_raw[nik]['months'][mo] = mpp_raw[nik]['months'].get(mo, 0) + ins
 
-    print(f"  [OK] {site} — {dict({m: sm[site][m]['trips'] for m in sm[site]})}")
+    print(f'  [OK] {site} — {dict({m: sm[site][m]["trips"] for m in sm[site]})}')
 
 
 def compute_mpp_categories(sm, mpp_raw):
-    """Fill mpp_low/mid/high in sm from mpp_raw."""
     for nik, d in mpp_raw.items():
         for mo, ins in d['months'].items():
             site = d['site']
             if site in sm and mo in sm[site]:
-                if ins < 500_000:
-                    sm[site][mo]['mpp_low']  += 1
-                elif ins > 1_500_000:
-                    sm[site][mo]['mpp_high'] += 1
-                else:
-                    sm[site][mo]['mpp_mid']  += 1
+                if ins < 500_000:    sm[site][mo]['mpp_low']  += 1
+                elif ins > 1_500_000: sm[site][mo]['mpp_high'] += 1
+                else:                 sm[site][mo]['mpp_mid']  += 1
 
 
-def add_period_subkeys(sm, partial_months):
-    """
-    Add .period and .mom_period sub-keys for partial months.
-    For now, .period = full month data (will be overridden if you filter by date).
-    .mom_period = same-window data from previous month (must be in SITE_MONTHLY already).
+def build_mpp_tables(mpp_raw, months):
+    all_mpp = []
+    for nik, d in mpp_raw.items():
+        total = sum(d['months'].values())
+        row = {'nik': nik, 'name': d['name'], 'site': d['site'], 'total': total}
+        for m in months:
+            row[m[:3].lower()] = d['months'].get(m, 0)
+        all_mpp.append(row)
+    all_mpp.sort(key=lambda x: -x['total'])
+    top20 = all_mpp[:20]
+    return all_mpp, top20
 
-    NOTE: If your sheet already has a 'Period' or 'Cutoff' column, filter here.
-    Otherwise, .period mirrors the full month totals (extraction already filtered by date
-    if you set your sheet to only include MTD rows).
-    """
-    pass  # Sub-keys sudah dihitung di extraction script terpisah jika diperlukan
 
-
-def build_insight_data(sm26, sm25, sites_ndc):
-    """Build INSIGHT_DATA dict from sm26 and sm25."""
+def build_insight_data(sm26, sm25, sites_ndc, months, partial_months):
     def agg(sm, month, sites, key=None):
-        r = {'trips': 0, 'do_': 0, 'dp': 0, 'ujp': 0, 'ins': 0}
+        r = {'trips':0,'do_':0,'dp':0,'ujp':0,'ins':0}
         for sk in sites:
-            d = sm.get(sk, {}).get(month, {})
-            if key and isinstance(d.get(key), dict):
-                d = d[key]
-            for k in r:
-                r[k] += d.get(k, 0)
+            d = sm.get(sk,{}).get(month,{})
+            if key and isinstance(d.get(key), dict): d = d[key]
+            for k in r: r[k] += d.get(k, 0)
         return r
 
     def metrics(d):
-        t  = d['trips'] or 1
-        do_ = d['do_']  or 1
-        dp_ = d['dp']   or 1
+        t=d['trips'] or 1; do_=d['do_'] or 1; dp_=d['dp'] or 1
         return {
-            'DO'       : d['do_'],
-            'DP'       : d['dp'],
-            'Trip'     : d['trips'],
-            'UJP'      : d['ujp'],
-            'Insentif' : d['ins'],
-            'DO/Trip'  : round(d['do_'] / t,  2),
-            'DP/Trip'  : round(d['dp']  / t,  2),
-            'UJP/Trip' : round(d['ujp'] / t),
-            'UJP/DO'   : round(d['ujp'] / do_),
-            'UJP/DP'   : round(d['ujp'] / dp_),
-            'DO/DP'    : round(d['do_'] / dp_, 2),
+            'DO':d['do_'],'DP':d['dp'],'Trip':d['trips'],
+            'UJP':d['ujp'],'Insentif':d['ins'],
+            'DO/Trip':round(d['do_']/t,2),'DP/Trip':round(d['dp']/t,2),
+            'UJP/Trip':round(d['ujp']/t),'UJP/DO':round(d['ujp']/do_),
+            'UJP/DP':round(d['ujp']/dp_),'DO/DP':round(d['do_']/dp_,2),
         }
 
     ALL_SITES = list(sm26.keys())
-    prev_map  = {
-        'February': 'January', 'March': 'February', 'April': 'March',
-        'May': 'April', 'June': 'May'
-    }
+    prev_map = {MONTH_ORDER[i]: MONTH_ORDER[i-1] for i in range(1, len(MONTH_ORDER))}
 
     insight = {}
-    for m in MONTHS:
+    for m in months:
         prev = prev_map.get(m)
-        is_partial = m in PARTIAL_MONTHS
-
-        cur_key  = 'period'    if is_partial else None
+        is_partial = m in partial_months
+        cur_key  = 'period'     if is_partial else None
         prev_key = 'mom_period' if is_partial else None
 
         cur26  = agg(sm26, m, ALL_SITES, cur_key)
         cur25  = agg(sm25, m, sites_ndc)
-        prev26 = agg(sm26, prev, ALL_SITES, prev_key) if prev else None
+        prev26 = agg(sm26, prev, ALL_SITES, prev_key) if prev and prev in months else None
 
         insight[m] = {
-            'cur26'  : metrics(cur26),
-            'cur25'  : metrics(cur25),
-            'prev26' : metrics(prev26) if prev26 else None,
-            'cutoff_day'     : PARTIAL_MONTHS.get(m),
-            'prev_cutoff_day': PARTIAL_MONTHS.get(prev) if prev else None,
+            'cur26'          : metrics(cur26),
+            'cur25'          : metrics(cur25),
+            'prev26'         : metrics(prev26) if prev26 else None,
+            'cutoff_day'     : partial_months.get(m),
+            'prev_cutoff_day': partial_months.get(prev) if prev else None,
         }
-
     return insight
 
 
-# ── HTML Replace ─────────────────────────────────────────────────────────────
+# ── HTML Update ──────────────────────────────────────────────────────────────
 
 def replace_section(html, const_name, new_js, next_const):
     start = html.find(f'const {const_name}=')
     end   = html.find(f'const {next_const}=')
     if start == -1 or end == -1:
-        raise ValueError(f'replace_section: tidak ditemukan {const_name} atau {next_const}')
+        raise ValueError(f'Tidak ditemukan: {const_name} atau {next_const}')
     return html[:start] + f'const {const_name}={new_js};\n' + html[end:]
 
 def jd(obj):
-    return json.dumps(obj, separators=(',', ':'), ensure_ascii=False)
+    return json.dumps(obj, separators=(',',':'), ensure_ascii=False)
 
-def update_html(sm26, sm25, all_mpp, top20, insight):
+def update_html(sm26, sm25, all_mpp, top20, insight, months, partial_months):
     with open(HTML_PATH, 'r', encoding='utf-8') as f:
         html = f.read()
 
-    # Update LAST_MONTH di nav()
-    last_month = MONTHS[-1]
-    html = re.sub(
-        r"const LAST_MONTH='[A-Za-z]+'",
-        f"const LAST_MONTH='{last_month}'",
-        html
-    )
+    # Update MONTHS
+    html = re.sub(r'const MONTHS=\[[^\]]+\]', f'const MONTHS={jd(months)}', html)
+
+    # Update LAST_MONTH
+    html = re.sub(r"const LAST_MONTH='[A-Za-z]+'", f"const LAST_MONTH='{months[-1]}'", html)
 
     # Update PERIOD_CONFIG
-    partial_list = json.dumps(list(PARTIAL_MONTHS.keys()))
-    cutoff_dict  = json.dumps(PARTIAL_MONTHS)
     html = re.sub(
         r'const PERIOD_CONFIG=\{[^;]+\};',
-        f'const PERIOD_CONFIG={{partial_months:{partial_list},cutoff:{cutoff_dict}}};',
+        f'const PERIOD_CONFIG={{partial_months:{jd(list(partial_months.keys()))},cutoff:{jd(partial_months)}}};',
         html
     )
 
-    # Update MONTHS array
-    months_js = json.dumps(MONTHS)
-    html = re.sub(r'const MONTHS=\[[^\]]+\]', f'const MONTHS={months_js}', html)
-
-    # Replace data consts
+    # Update data consts
     html = replace_section(html, 'SITE_MONTHLY_2025', jd(sm25), 'SITE_MONTHLY')
     html = replace_section(html, 'SITE_MONTHLY',      jd(sm26), 'ALL_MPP')
     html = replace_section(html, 'ALL_MPP',           jd(all_mpp), 'TOP_MPP')
@@ -285,100 +318,61 @@ def update_html(sm26, sm25, all_mpp, top20, insight):
     with open(HTML_PATH, 'w', encoding='utf-8') as f:
         f.write(html)
 
-    print(f'\n✅ HTML updated: {HTML_PATH}')
+    wib = timezone(timedelta(hours=7))
+    now = datetime.now(wib).strftime('%d %b %Y %H:%M WIB')
+    print(f'\n✅ HTML updated: {HTML_PATH} [{now}]')
 
 
-# ── Build ALL_MPP & TOP_MPP ──────────────────────────────────────────────────
-
-def build_mpp_tables(mpp_raw):
-    """Build ALL_MPP and TOP_MPP from mpp_raw."""
-    all_mpp = []
-    for nik, d in mpp_raw.items():
-        total = sum(d['months'].values())
-        row = {
-            'nik'  : nik,
-            'name' : d['name'],
-            'site' : d['site'],
-            'total': total,
-        }
-        for m in MONTHS:
-            row[m[:3].lower()] = d['months'].get(m, 0)
-        all_mpp.append(row)
-
-    all_mpp.sort(key=lambda x: -x['total'])
-
-    top20 = [
-        {'name': r['name'], 'site': r['site'], 'total': r['total'],
-         **{m[:3].lower(): r[m[:3].lower()] for m in MONTHS}}
-        for r in all_mpp[:20]
-    ]
-
-    return all_mpp, top20
-
-
-# ── Verification ─────────────────────────────────────────────────────────────
+# ── Verify ───────────────────────────────────────────────────────────────────
 
 def verify(sm26):
-    checks = [('JBBK', 'April', 1340), ('CKP', 'April', 1211), ('SDA', 'April', 823)]
-    ok = True
+    checks = [('JBBK','April',1340),('CKP','April',1211),('SDA','April',823)]
     for sk, m, exp in checks:
-        actual = sm26.get(sk, {}).get(m, {}).get('trips', 0)
+        actual = sm26.get(sk,{}).get(m,{}).get('trips',0)
         status = '✅' if actual == exp else f'⚠️  expected {exp}'
         print(f'  {sk} {m} trips={actual} {status}')
-        if actual != exp: ok = False
-    return ok
 
 
-# ── Main ──────────────────────────────────────────────────────────────────────
+# ── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
     print('=== Dashboard Insentif — Auto Update ===\n')
-
     gc = get_gc()
 
-    sheet_id_26 = os.environ['SHEET_ID_2026']
-    sheet_id_25 = os.environ['SHEET_ID_2025']
+    wb26 = gc.open_by_key(os.environ['SHEET_ID_2026'])
+    wb25 = gc.open_by_key(os.environ['SHEET_ID_2025'])
 
-    sm26    = {s: {} for s in SITES_26}
-    sm25    = {s: {} for s in SITES_25}
+    # Auto-detect months dari sheet 2026
+    months, partial_months = detect_months_and_partial(wb26, SITES_26)
+
+    sm26 = {s:{} for s in SITES_26}
+    sm25 = {s:{} for s in SITES_25}
     mpp_raw = {}
 
-    # ── Extract 2026 ──
-    print('📥 Extracting 2026...')
-    wb26 = gc.open_by_key(sheet_id_26)
+    print('\n📥 Extracting 2026...')
     for site in SITES_26:
         try:
-            ws = wb26.worksheet(site)
-            extract_sheet(ws, site, MONTHS, sm26, mpp_raw)
+            extract_sheet(wb26.worksheet(site), site, months, sm26, mpp_raw)
         except gspread.exceptions.WorksheetNotFound:
-            print(f'  [MISS] {site} — tab tidak ditemukan')
+            print(f'  [MISS] {site}')
 
-    # ── Extract 2025 ──
     print('\n📥 Extracting 2025...')
-    wb25 = gc.open_by_key(sheet_id_25)
     mpp_raw_25 = {}
     for site in SITES_25:
         try:
-            ws = wb25.worksheet(site)
-            extract_sheet(ws, site, MONTHS, sm25, mpp_raw_25)
+            extract_sheet(wb25.worksheet(site), site, months, sm25, mpp_raw_25)
         except gspread.exceptions.WorksheetNotFound:
-            print(f'  [MISS] {site} — tab tidak ditemukan')
+            print(f'  [MISS] {site}')
 
-    # ── MPP categories ──
     compute_mpp_categories(sm26, mpp_raw)
-    all_mpp, top20 = build_mpp_tables(mpp_raw)
+    all_mpp, top20 = build_mpp_tables(mpp_raw, months)
+    insight = build_insight_data(sm26, sm25, SITES_25, months, partial_months)
 
-    # ── INSIGHT_DATA ──
-    insight = build_insight_data(sm26, sm25, SITES_25)
-
-    # ── Verify ──
-    print('\n🔍 Verifikasi trip count April:')
+    print('\n🔍 Verifikasi:')
     verify(sm26)
 
-    # ── Update HTML ──
     print('\n✏️  Updating HTML...')
-    update_html(sm26, sm25, all_mpp, top20, insight)
-
+    update_html(sm26, sm25, all_mpp, top20, insight, months, partial_months)
 
 if __name__ == '__main__':
     main()
