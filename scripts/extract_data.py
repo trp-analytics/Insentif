@@ -142,7 +142,15 @@ def empty_month():
 
 # ── Extraction ───────────────────────────────────────────────────────────────
 
-def extract_sheet(ws, site, months, sm, mpp_raw):
+def extract_sheet(ws, site, months, sm, mpp_raw, partial_months=None, is_2025=False):
+    """
+    Extract sheet data.
+    Kalau is_2025=True dan partial_months ada, generate sub-key .yoy_period
+    berisi data dengan cutoff hari yang sama (untuk YoY apple-to-apple).
+    """
+    DATE_FMTS = ['%d/%m/%Y','%Y-%m-%d','%d-%m-%Y','%m/%d/%Y']
+    DATE_COLS  = ['Tanggal','tanggal','Date','date','Tgl','tgl','Transaction Date']
+
     all_rows = ws.get_all_values()
     if not all_rows:
         print(f'  [SKIP] {site} — kosong')
@@ -161,11 +169,13 @@ def extract_sheet(ws, site, months, sm, mpp_raw):
         'nik1'   : col_idx(headers, 'NIK1'),
         'nik2'   : col_idx(headers, 'nik2'),
         'kenek'  : col_idx(headers, 'kenek1'),
+        'date'   : next((col_idx(headers, dc) for dc in DATE_COLS if col_idx(headers, dc) >= 0), -1),
     }
 
-    monthly   = defaultdict(empty_month)
-    mpp_month = defaultdict(lambda: defaultdict(float))
-    mpp_info  = {}
+    monthly     = defaultdict(empty_month)
+    yoy_partial = defaultdict(empty_month)  # untuk YoY apple-to-apple di 2025
+    mpp_month   = defaultdict(lambda: defaultdict(float))
+    mpp_info    = {}
 
     for row in all_rows[1:]:
         def g(c): return row[c] if 0 <= c < len(row) else ''
@@ -173,19 +183,39 @@ def extract_sheet(ws, site, months, sm, mpp_raw):
         m = str(g(ci['month'])).strip()
         if m not in months: continue
 
-        drv       = str(g(ci['driver'])).strip()
-        is_dummy  = 'DUMMY' in drv.upper()
-        lc_raw    = str(g(ci['lc'])).strip()
-        lc_empty  = not lc_raw or lc_raw in ('','None','#N/A')
+        drv        = str(g(ci['driver'])).strip()
+        is_dummy   = 'DUMMY' in drv.upper()
+        lc_raw     = str(g(ci['lc'])).strip()
+        lc_empty   = not lc_raw or lc_raw in ('','None','#N/A')
         has_driver = bool(drv and drv.upper() not in ('','NONE'))
 
         if lc_empty and not has_driver: continue
+
+        # Parse tanggal untuk yoy_period filter
+        row_day = None
+        if ci['date'] >= 0:
+            raw_date = str(g(ci['date'])).strip()
+            for fmt in DATE_FMTS:
+                try:
+                    row_day = datetime.strptime(raw_date, fmt).day
+                    break
+                except: pass
 
         monthly[m]['trips'] += 1
         monthly[m]['do_']   += to_num(g(ci['do']))
         monthly[m]['dp']    += to_num(g(ci['dp']))
         monthly[m]['ujp']   += to_num(g(ci['ujp']))
         monthly[m]['ins']   += to_num(g(ci['ins']))
+
+        # Accumulate yoy_period — filter by cutoff day (sama dengan 2026 partial)
+        if is_2025 and partial_months and m in partial_months:
+            cutoff = partial_months[m]
+            if row_day is not None and row_day <= cutoff:
+                yoy_partial[m]['trips'] += 1
+                yoy_partial[m]['do_']   += to_num(g(ci['do']))
+                yoy_partial[m]['dp']    += to_num(g(ci['dp']))
+                yoy_partial[m]['ujp']   += to_num(g(ci['ujp']))
+                yoy_partial[m]['ins']   += to_num(g(ci['ins']))
 
         if is_dummy or lc_empty: continue
         ins_mpp = to_num(g(ci['insmpp']))
@@ -201,6 +231,12 @@ def extract_sheet(ws, site, months, sm, mpp_raw):
                 mpp_info[nik] = {'name': name, 'site': site}
 
     sm[site] = {m: dict(v) for m, v in monthly.items()}
+
+    # Inject yoy_period sub-key ke sm[site][month]
+    for m, d in yoy_partial.items():
+        if m in sm[site]:
+            sm[site][m]['yoy_period'] = dict(d)
+
     for nik, info in mpp_info.items():
         if nik not in mpp_raw:
             mpp_raw[nik] = {'name': info['name'], 'site': site, 'months': {}}
@@ -263,7 +299,7 @@ def build_insight_data(sm26, sm25, sites_ndc, months, partial_months):
         prev_key = 'mom_period' if is_partial else None
 
         cur26  = agg(sm26, m, ALL_SITES, cur_key)
-        cur25  = agg(sm25, m, sites_ndc)
+        cur25  = agg(sm25, m, ALL_SITES, 'yoy_period' if is_partial else None)
         prev26 = agg(sm26, prev, ALL_SITES, prev_key) if prev and prev in months else None
 
         insight[m] = {
@@ -360,7 +396,8 @@ def main():
     mpp_raw_25 = {}
     for site in SITES_26:  # ekstrak semua site dari 2025
         try:
-            extract_sheet(wb25.worksheet(site), site, months, sm25, mpp_raw_25)
+            extract_sheet(wb25.worksheet(site), site, months, sm25, mpp_raw_25,
+                         partial_months=partial_months, is_2025=True)
         except gspread.exceptions.WorksheetNotFound:
             print(f'  [MISS] {site}')
 
