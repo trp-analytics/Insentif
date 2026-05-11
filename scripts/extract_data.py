@@ -346,7 +346,7 @@ def main():
     months, partial_months = detect_months_and_partial(wb26, SITES_26)
 
     sm26 = {s:{} for s in SITES_26}
-    sm25 = {s:{} for s in SITES_25}
+    sm25 = {s:{} for s in SITES_26}  # semua site, bukan cuma NDC
     mpp_raw = {}
 
     print('\n📥 Extracting 2026...')
@@ -358,7 +358,7 @@ def main():
 
     print('\n📥 Extracting 2025...')
     mpp_raw_25 = {}
-    for site in SITES_25:
+    for site in SITES_26:  # ekstrak semua site dari 2025
         try:
             extract_sheet(wb25.worksheet(site), site, months, sm25, mpp_raw_25)
         except gspread.exceptions.WorksheetNotFound:
@@ -366,7 +366,7 @@ def main():
 
     compute_mpp_categories(sm26, mpp_raw)
     all_mpp, top20 = build_mpp_tables(mpp_raw, months)
-    insight = build_insight_data(sm26, sm25, SITES_25, months, partial_months)
+    insight = build_insight_data(sm26, sm25, SITES_26, months, partial_months)
 
     print('\n🔍 Verifikasi:')
     verify(sm26)
