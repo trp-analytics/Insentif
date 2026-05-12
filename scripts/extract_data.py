@@ -9,7 +9,7 @@ Dijalankan oleh GitHub Actions. Butuh env vars:
   SHEET_ID_2025      : ID spreadsheet 2025
 """
 
-import os, json, re
+import os, json, re, time
 from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 
@@ -386,18 +386,20 @@ def main():
     mpp_raw = {}
 
     print('\n📥 Extracting 2026...')
-    for site in SITES_26:
+    for i, site in enumerate(SITES_26):
         try:
             extract_sheet(wb26.worksheet(site), site, months, sm26, mpp_raw)
+            if i < len(SITES_26)-1: time.sleep(2)  # hindari quota exceeded
         except gspread.exceptions.WorksheetNotFound:
             print(f'  [MISS] {site}')
 
     print('\n📥 Extracting 2025...')
     mpp_raw_25 = {}
-    for site in SITES_26:  # ekstrak semua site dari 2025
+    for i, site in enumerate(SITES_26):  # ekstrak semua site dari 2025
         try:
             extract_sheet(wb25.worksheet(site), site, months, sm25, mpp_raw_25,
                          partial_months=partial_months, is_2025=True)
+            if i < len(SITES_26)-1: time.sleep(2)  # hindari quota exceeded
         except gspread.exceptions.WorksheetNotFound:
             print(f'  [MISS] {site}')
 
