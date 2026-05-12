@@ -252,6 +252,13 @@ tr.total-row td{background:#f0f5fb;font-weight:600;border-top:2px solid #c2d0e5}
         <option value="March">Maret</option>
         <option value="April">April</option>
         <option value="May">Mei *</option>
+        <option disabled>──────────</option>
+        <option value="Q1">Q1 (Jan–Mar)</option>
+        <option value="Q2">Q2 (Apr–Jun)</option>
+        <option value="Q3">Q3 (Jul–Sep)</option>
+        <option value="Q4">Q4 (Okt–Des)</option>
+        <option value="S1">Semester 1</option>
+        <option value="S2">Semester 2</option>
       </select>
       <div class="chip site" id="siteChip">Semua Site</div>
       <div class="chip time" id="clkChip">--:--</div>
@@ -604,10 +611,29 @@ function tick(){const n=new Date();document.getElementById('clkChip').textConten
 tick();setInterval(tick,60000);
 
 // Helpers
+// Mapping group filter ke bulan
+const MONTH_GROUPS={
+  Q1:['January','February','March'],
+  Q2:['April','May','June'],
+  Q3:['July','August','September'],
+  Q4:['October','November','December'],
+  S1:['January','February','March','April','May','June'],
+  S2:['July','August','September','October','November','December'],
+};
 function getMonths(){
   if(VIEW==='mtd') return ['May'];
   const ms=document.getElementById('monthSel').value;
-  return ms==='all'?MONTHS:[ms];
+  if(ms==='all') return MONTHS;
+  if(MONTH_GROUPS[ms]){
+    // Hanya bulan yang ada di data (apple-to-apple — skip bulan yang belum ada)
+    return MONTH_GROUPS[ms].filter(m=>MONTHS.includes(m));
+  }
+  return [ms];
+}
+function getMonthGroupLabel(){
+  const ms=document.getElementById('monthSel').value;
+  const labels={'all':'Semua Bulan','Q1':'Q1','Q2':'Q2','Q3':'Q3','Q4':'Q4','S1':'Semester 1','S2':'Semester 2'};
+  return labels[ms]||ms;
 }
 function getSites(){if(SITE==='all')return AK;if(SITE==='ndc')return NK;if(SITE==='hub')return HK;return[SITE];}
 function agg(sites,months){
@@ -639,8 +665,16 @@ function nav(pg,btn){
     const ms=document.getElementById('monthSel');
     const mv=ms?ms.value:'all';
     const LAST_MONTH='May';
-    if(mv&&mv!=='all'){_insightMonth=mv;}
-    else{_insightMonth=LAST_MONTH;}
+    if(mv&&mv!=='all'&&!MONTH_GROUPS[mv]){
+      // Bulan spesifik
+      _insightMonth=mv;
+    } else if(mv&&MONTH_GROUPS[mv]){
+      // Group Q/Semester → default ke bulan terakhir yang ada di data
+      const grpMonths=MONTH_GROUPS[mv].filter(m=>MONTHS.includes(m));
+      _insightMonth=grpMonths.length?grpMonths[grpMonths.length-1]:LAST_MONTH;
+    } else {
+      _insightMonth=LAST_MONTH;
+    }
     _demandView='monthly';
     document.querySelectorAll('#demandViewTg .tgb').forEach((b,i)=>b.classList.toggle('active',i===0));
     setTimeout(renderInsight,80);
@@ -760,7 +794,7 @@ function renderSumTable(){
   const rows=sites.map(s=>{const d=agg([s],months);return{s,d,tp:NK.includes(s)?'NDC':'Hub',col:SC[s]||'#023188'}}).filter(r=>r.d.trips>0).sort((a,b)=>b.d.ins-a.d.ins);
   const tot=agg(sites,months);
   if(!document.getElementById('sumCaption'))return;
-  document.getElementById('sumCaption').textContent=`${sites.length} site · ${months.map(m=>MLBL[MONTHS.indexOf(m)]).join(', ')}`;
+  document.getElementById('sumCaption').textContent=`${sites.length} site · ${getMonthGroupLabel()==='Semua Bulan'?months.map(m=>MLBL[MONTHS.indexOf(m)]).join(', '):getMonthGroupLabel()}`;
   document.getElementById('sumBody').innerHTML=[
     ...rows.map(r=>{
       const badge=r.tp==='NDC'?'<span class="bdg-ndc">NDC</span>':'<span class="bdg-hub">Hub</span>';
@@ -781,7 +815,7 @@ function renderProd(){
     {l:'UJP / DO',v:tot.do_?fmtN(Math.round(tot.ujp/tot.do_)):'-',s:'Rp per DO'},
   ].map(r=>`<div class="rc"><div class="rc-val">${r.v}</div><div class="rc-lbl">${r.l}</div><div class="rc-sub">${r.s}</div></div>`).join('');
   const rows=sites.map(s=>{const d=agg([s],months);return{s,d,tp:NK.includes(s)?'NDC':'Hub'}}).filter(r=>r.d.trips>0).sort((a,b)=>b.d.ins-a.d.ins);
-  document.getElementById('prodCaption').textContent=`${sites.length} site · ${months.map(m=>MLBL[MONTHS.indexOf(m)]).join(', ')}`;
+  document.getElementById('prodCaption').textContent=`${sites.length} site · ${getMonthGroupLabel()==='Semua Bulan'?months.map(m=>MLBL[MONTHS.indexOf(m)]).join(', '):getMonthGroupLabel()}`;
   document.getElementById('prodBody').innerHTML=rows.map(r=>{
     const badge=r.tp==='NDC'?'<span class="bdg-ndc">NDC</span>':'<span class="bdg-hub">Hub</span>';
     return`<tr><td>${SD[r.s]||r.s}</td><td>${badge}</td><td class="r">${fmtN(r.d.trips)}</td><td class="r">${r.d.trips?(r.d.do_/r.d.trips).toFixed(1):'-'}</td><td class="r">${r.d.trips?(r.d.dp/r.d.trips).toFixed(1):'-'}</td><td class="r">${r.d.trips?fmtN(Math.round(r.d.ujp/r.d.trips)):'-'}</td><td class="r">${r.d.do_?fmtN(Math.round(r.d.ujp/r.d.do_)):'-'}</td><td class="r" style="font-weight:600">${fmt(r.d.ins)}</td></tr>`;
@@ -849,7 +883,7 @@ function renderDistTable(){
   const pp=[];for(let p=Math.max(1,DIST_PAGE-2);p<=Math.min(tp,DIST_PAGE+2);p++)pp.push(p);
   document.getElementById('distPB').innerHTML=(DIST_PAGE>1?`<button class="pbtn" onclick="gDistPage(${DIST_PAGE-1})">‹</button>`:'')+pp.map(p=>`<button class="pbtn ${p===DIST_PAGE?'on':''}" onclick="gDistPage(${p})">${p}</button>`).join('')+(DIST_PAGE<tp?`<button class="pbtn" onclick="gDistPage(${DIST_PAGE+1})">›</button>`:'');
   const sn={'all':'Semua Site','ndc':'NDC','hub':'Hub'}[SITE]||(SD[SITE]||SITE);
-  document.getElementById('distFltLbl').textContent=`Filter aktif: ${sn} · ${months.map(m=>MLBL[MONTHS.indexOf(m)]).join(', ')}${DIST_CAT!=='all'?' · '+DIST_CAT:''}`;
+  document.getElementById('distFltLbl').textContent=`Filter aktif: ${sn} · ${getMonthGroupLabel()==='Semua Bulan'?months.map(m=>MLBL[MONTHS.indexOf(m)]).join(', '):getMonthGroupLabel()}${DIST_CAT!=='all'?' · '+DIST_CAT:''}`;
 }
 function gDistPage(p){DIST_PAGE=p;renderDistTable();}
 
@@ -916,13 +950,21 @@ function buildCharts(){
     {type:'line',label:'Kurva Normal',data:normCurve,borderColor:'#023188',borderWidth:2,pointRadius:4,pointBackgroundColor:'#023188',fill:false,tension:.4,order:1,datalabels:{display:false}}
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:10}}},scales:{x:{ticks:{...to,autoSkip:false},grid:{display:false}},y:{ticks:to,grid:go}}}});
 
-  document.getElementById('distSub').textContent=`${sites.length} site · ${months.map(m=>MLBL[MONTHS.indexOf(m)]).join(', ')}`;
+  document.getElementById('distSub').textContent=`${sites.length} site · ${getMonthGroupLabel()==='Semua Bulan'?months.map(m=>MLBL[MONTHS.indexOf(m)]).join(', '):getMonthGroupLabel()}`;
 }
 
 function renderAll(){
   if(typeof renderInsight==="function"&&document.getElementById('pg-insight')?.classList.contains('active')){
     const ms=document.getElementById('monthSel');const mv=ms?ms.value:'all';
-    _insightMonth=(mv&&mv!=='all')?mv:'April';
+    if(mv&&mv!=='all'&&!MONTH_GROUPS[mv]){
+      _insightMonth=mv;  // bulan spesifik
+    } else if(mv&&MONTH_GROUPS[mv]){
+      // group Q/Semester → bulan terakhir yang ada di data
+      const grpMonths=MONTH_GROUPS[mv].filter(m=>MONTHS.includes(m));
+      _insightMonth=grpMonths.length?grpMonths[grpMonths.length-1]:'May';
+    } else {
+      _insightMonth='May';
+    }
     setTimeout(renderInsight,80);
   }
   renderKPI('kpi-ov');renderKPIDist();
@@ -1683,13 +1725,41 @@ function renderInsight(){
   const v26=toMetrics(aggSites(SITE_MONTHLY,[m],sites,[curKey]));
   const v25=toMetrics(aggSites(SITE_MONTHLY_2025,[m],sites,[curKey]));
   const vp=prev?toMetrics(aggSites(SITE_MONTHLY,[prev],sites,[prevKey])):null;
-  const cutD=curIsPartial&&PERIOD_CONFIG.cutoff?.[m]?PERIOD_CONFIG.cutoff[m]:null;const prevCutD=curIsPartial&&PERIOD_CONFIG.cutoff?.[prev]?PERIOD_CONFIG.cutoff[prev]:null;const periodNote=cutD?` (1-${cutD} ${mn}, apple-to-apple)`:'';const sub=document.getElementById('insightSubtitle');if(sub)sub.textContent=`${mn} 2026 vs ${pmn} 2026 (MoM)${periodNote} & ${mn} 2025 (YoY)`;
-  const momSubNote=cutD?` · ${mn} 1-${cutD} vs ${pmn} 1-${prevCutD||'?'}`:'';const ms=document.getElementById('insightMoMSub');if(ms)ms.textContent=`${pmn} 2026 vs ${mn} 2026${momSubNote}`;
-  const ys=document.getElementById('insightYoYSub');if(ys)ys.textContent=`${mn} 2025 vs ${mn} 2026`;
-  const rt=document.getElementById('insightRawTitle');if(rt)rt.textContent=`Tabel Perbandingan — ${mn} 2026`;
+  // Detect group filter for label context
+  const _ms=document.getElementById('monthSel');
+  const _mv=_ms?_ms.value:'all';
+  const grpLabel=MONTH_GROUPS[_mv]?getMonthGroupLabel():null; // e.g. 'Q1', 'Semester 1'
+  const grpMonthsAvail=grpLabel?MONTH_GROUPS[_mv].filter(mo=>MONTHS.includes(mo)):null;
+  const grpLabelFull=grpLabel?(grpMonthsAvail.length<MONTH_GROUPS[_mv].length?`${grpLabel} (${grpMonthsAvail.map(mo=>({January:'Jan',February:'Feb',March:'Mar',April:'Apr',May:'Mei',June:'Jun',July:'Jul',August:'Agu',September:'Sep',October:'Okt',November:'Nov',December:'Des'})[mo]||mo).join('–')})`:grpLabel):null;
+
+  const cutD=curIsPartial&&PERIOD_CONFIG.cutoff?.[m]?PERIOD_CONFIG.cutoff[m]:null;
+  const prevCutD=curIsPartial&&PERIOD_CONFIG.cutoff?.[prev]?PERIOD_CONFIG.cutoff[prev]:null;
+  const periodNote=cutD?` (1-${cutD} ${mn}, apple-to-apple)`:'';
+
+  const sub=document.getElementById('insightSubtitle');
+  if(sub) sub.textContent=grpLabelFull
+    ? `${grpLabelFull} 2026 — menampilkan ${mn} (bulan terakhir) · MoM vs ${pmn} & YoY vs ${grpLabel} 2025`
+    : `${mn} 2026 vs ${pmn} 2026 (MoM)${periodNote} & ${mn} 2025 (YoY)`;
+
+  const momSub=document.getElementById('insightMoMSub');
+  const momSubNote=cutD?` · ${mn} 1-${cutD} vs ${pmn} 1-${prevCutD||'?'}`:'';
+  if(momSub) momSub.textContent=grpLabelFull
+    ? `${pmn} 2026 vs ${mn} 2026 (MoM dalam ${grpLabel})`
+    : `${pmn} 2026 vs ${mn} 2026${momSubNote}`;
+
+  const ys=document.getElementById('insightYoYSub');
+  if(ys) ys.textContent=grpLabelFull
+    ? `${grpLabel} 2025 vs ${grpLabel} 2026`
+    : `${mn} 2025 vs ${mn} 2026`;
+
+  const rt=document.getElementById('insightRawTitle');
+  if(rt) rt.textContent=grpLabelFull
+    ? `Tabel Perbandingan — ${grpLabelFull} 2026 (${mn})`
+    : `Tabel Perbandingan — ${mn} 2026`;
+
   const tp=document.getElementById('th-prev');if(tp)tp.textContent=pmn?pmn+' 26':'—';
-  const tc=document.getElementById('th-cur');if(tc)tc.textContent=mn+' 26';
-  const ty=document.getElementById('th-yoy');if(ty)ty.textContent=mn+' 25';
+  const tc=document.getElementById('th-cur');if(tc)tc.textContent=grpLabelFull?`${mn} 26 (${grpLabel})`:mn+' 26';
+  const ty=document.getElementById('th-yoy');if(ty)ty.textContent=grpLabelFull?`${mn} 25 (${grpLabel})`:mn+' 25';
   const tbody=document.getElementById('insightRawBody');
   if(tbody)tbody.innerHTML=INSIGHT_METRICS.map((met,i)=>{
     const c=v26[met.key]||0,p=vp?vp[met.key]||0:null,y=v25[met.key]||0;
