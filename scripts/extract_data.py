@@ -25,6 +25,22 @@ SITES_26 = [
 ]
 SITES_25 = ['JBBK','CKP','SDA']
 
+# Tab names di sheet 2025 pakai HURUF KAPITAL — mapping site name → tab name 2025
+SITES_25_TAB_MAP = {
+    'JBBK'          : 'JBBK',
+    'CKP'           : 'CKP',
+    'SDA'           : 'SDA',
+    'Hub Bogor'     : 'HUB BOGOR',
+    'Hub Tangerang' : 'HUB TANGERANG',
+    'Hub Utara'     : 'HUB UTARA',
+    'Hub Bandung'   : 'HUB BANDUNG',
+    'Hub Yogya'     : 'HUB YOGYA',
+    'Hub Semarang'  : 'HUB SEMARANG',
+    'Hub Lampung'   : 'HUB LAMPUNG',
+    'Hub Palembang' : 'HUB PALEMBANG',
+    'Hub Kediri'    : 'HUB KEDIRI',
+}
+
 # 2025: extract semua bulan yang tersedia termasuk Q4
 MONTHS_2025 = [
     'January','February','March','April','May','June',
@@ -401,13 +417,14 @@ def main():
 
     print('\n📥 Extracting 2025...')
     mpp_raw_25 = {}
-    for i, site in enumerate(SITES_26):  # ekstrak semua site dari 2025
+    for i, site in enumerate(SITES_26):
+        tab_name = SITES_25_TAB_MAP.get(site, site)  # pakai nama tab 2025
         try:
-            extract_sheet(wb25.worksheet(site), site, MONTHS_2025, sm25, mpp_raw_25,
+            extract_sheet(wb25.worksheet(tab_name), site, MONTHS_2025, sm25, mpp_raw_25,
                          partial_months=partial_months, is_2025=True)
             if i < len(SITES_26)-1: time.sleep(2)
         except gspread.exceptions.WorksheetNotFound:
-            print(f'  [MISS] {site}')
+            print(f'  [MISS] {site} (tab: {tab_name})')
 
     compute_mpp_categories(sm26, mpp_raw)
     all_mpp, top20 = build_mpp_tables(mpp_raw, months)
