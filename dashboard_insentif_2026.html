@@ -1699,13 +1699,9 @@ function renderDemandTable(){
 
 function renderInsight(){
   const sites=getSites();
-  const MNAME={January:'Jan',February:'Feb',March:'Mar',April:'Apr',May:'Mei'};
-  const prevMap={January:null,February:'January',March:'February',April:'March',May:'April'};
-  const m=_insightMonth;
-  const prev=prevMap[m];
-  const mn=MNAME[m]||m, pmn=prev?MNAME[prev]:'—';
+  const MNAME={January:'Jan',February:'Feb',March:'Mar',April:'Apr',May:'Mei',
+    June:'Jun',July:'Jul',August:'Agu',September:'Sep',October:'Okt',November:'Nov',December:'Des'};
   // aggSites with apple-to-apple period support
-  // periodKey: sub-key to read from each month's data ('period', 'mom_period', or null=full)
   function aggSites(sm,months,sl,periodKeys){
     const r={trips:0,do_:0,dp:0,ujp:0,ins:0};
     sl.forEach(sk=>{months.forEach((mo,idx)=>{
@@ -1716,50 +1712,65 @@ function renderInsight(){
     });});
     return r;
   }
-  function toMetrics(d){const t=d.trips||1,do_=d.do_||1;const dp_=d.dp||1;return{DO:d.do_,DP:d.dp,Trip:d.trips,UJP:d.ujp,Insentif:d.ins,'DO/Trip':+(d.do_/t).toFixed(2),'DP/Trip':+(d.dp/t).toFixed(2),'UJP/Trip':Math.round(d.ujp/t),'UJP/DO':Math.round(d.ujp/do_),'UJP/DP':Math.round(d.ujp/dp_),'DO/DP':+(d.do_/dp_).toFixed(2)};}
-  // Determine period keys for current month and prev month
-  const curIsPartial=PERIOD_CONFIG&&PERIOD_CONFIG.partial_months.includes(m);
-  const prevIsPartial=prev&&PERIOD_CONFIG&&PERIOD_CONFIG.partial_months.includes(prev);
-  const curKey=curIsPartial?'period':null;        // May → .period
-  const prevKey=curIsPartial?'mom_period':null;   // prev of partial → .mom_period (apple-to-apple)
-  const v26=toMetrics(aggSites(SITE_MONTHLY,[m],sites,[curKey]));
-  const v25=toMetrics(aggSites(SITE_MONTHLY_2025,[m],sites,[curKey]));
-  const vp=prev?toMetrics(aggSites(SITE_MONTHLY,[prev],sites,[prevKey])):null;
-  // Detect group filter for label context
+  function toMetrics(d){const t=d.trips||1,do_=d.do_||1,dp_=d.dp||1;return{DO:d.do_,DP:d.dp,Trip:d.trips,UJP:d.ujp,Insentif:d.ins,'DO/Trip':+(d.do_/t).toFixed(2),'DP/Trip':+(d.dp/t).toFixed(2),'UJP/Trip':Math.round(d.ujp/t),'UJP/DO':Math.round(d.ujp/do_),'UJP/DP':Math.round(d.ujp/dp_),'DO/DP':+(d.do_/dp_).toFixed(2)};}
+  // Detect filter context
   const _ms=document.getElementById('monthSel');
   const _mv=_ms?_ms.value:'all';
-  const grpLabel=MONTH_GROUPS[_mv]?getMonthGroupLabel():null; // e.g. 'Q1', 'Semester 1'
-  const grpMonthsAvail=grpLabel?MONTH_GROUPS[_mv].filter(mo=>MONTHS.includes(mo)):null;
-  const grpLabelFull=grpLabel?(grpMonthsAvail.length<MONTH_GROUPS[_mv].length?`${grpLabel} (${grpMonthsAvail.map(mo=>({January:'Jan',February:'Feb',March:'Mar',April:'Apr',May:'Mei',June:'Jun',July:'Jul',August:'Agu',September:'Sep',October:'Okt',November:'Nov',December:'Des'})[mo]||mo).join('–')})`:grpLabel):null;
-
-  const cutD=curIsPartial&&PERIOD_CONFIG.cutoff?.[m]?PERIOD_CONFIG.cutoff[m]:null;
-  const prevCutD=curIsPartial&&PERIOD_CONFIG.cutoff?.[prev]?PERIOD_CONFIG.cutoff[prev]:null;
-  const periodNote=cutD?` (1-${cutD} ${mn}, apple-to-apple)`:'';
-
-  const sub=document.getElementById('insightSubtitle');
-  if(sub) sub.textContent=grpLabelFull
-    ? `${grpLabelFull} 2026 — menampilkan ${mn} (bulan terakhir) · MoM vs ${pmn} & YoY vs ${grpLabel} 2025`
-    : `${mn} 2026 vs ${pmn} 2026 (MoM)${periodNote} & ${mn} 2025 (YoY)`;
-
-  const momSub=document.getElementById('insightMoMSub');
-  const momSubNote=cutD?` · ${mn} 1-${cutD} vs ${pmn} 1-${prevCutD||'?'}`:'';
-  if(momSub) momSub.textContent=grpLabelFull
-    ? `${pmn} 2026 vs ${mn} 2026 (MoM dalam ${grpLabel})`
-    : `${pmn} 2026 vs ${mn} 2026${momSubNote}`;
-
-  const ys=document.getElementById('insightYoYSub');
-  if(ys) ys.textContent=grpLabelFull
-    ? `${grpLabel} 2025 vs ${grpLabel} 2026`
-    : `${mn} 2025 vs ${mn} 2026`;
-
-  const rt=document.getElementById('insightRawTitle');
-  if(rt) rt.textContent=grpLabelFull
-    ? `Tabel Perbandingan — ${grpLabelFull} 2026 (${mn})`
-    : `Tabel Perbandingan — ${mn} 2026`;
-
-  const tp=document.getElementById('th-prev');if(tp)tp.textContent=pmn?pmn+' 26':'—';
-  const tc=document.getElementById('th-cur');if(tc)tc.textContent=grpLabelFull?`${mn} 26 (${grpLabel})`:mn+' 26';
-  const ty=document.getElementById('th-yoy');if(ty)ty.textContent=grpLabelFull?`${mn} 25 (${grpLabel})`:mn+' 25';
+  const isGroup=!!MONTH_GROUPS[_mv];
+  // Group prev mapping
+  const GRP_PREV={Q1:['October','November','December'],Q2:['January','February','March'],Q3:['April','May','June'],Q4:['July','August','September'],S1:['July','August','September','October','November','December'],S2:['January','February','March','April','May','June']};
+  const GRP_PREV_YEAR={Q1:true,Q2:false,Q3:false,Q4:false,S1:true,S2:false};
+  const GRP_LABEL_SHORT={Q1:'Q1',Q2:'Q2',Q3:'Q3',Q4:'Q4',S1:'Sem 1',S2:'Sem 2'};
+  const GRP_PREV_LABEL={Q1:'Q4 25',Q2:'Q1 26',Q3:'Q2 26',Q4:'Q3 26',S1:'S2 25',S2:'S1 26'};
+  let v26,v25,vp,curLabel,prevLabel,yoyLabel,titleLabel,subtitleText,momSubText,yoySubText;
+  if(isGroup){
+    const grp=_mv;
+    const curMonths=MONTH_GROUPS[grp].filter(m=>MONTHS.includes(m));
+    const prevMonths=GRP_PREV[grp]||[];
+    const usePrevYear=GRP_PREV_YEAR[grp];
+    const periodKeys26=curMonths.map(m=>(PERIOD_CONFIG&&PERIOD_CONFIG.partial_months.includes(m))?'period':null);
+    const periodKeys25=curMonths.map(m=>(PERIOD_CONFIG&&PERIOD_CONFIG.partial_months.includes(m))?'yoy_period':null);
+    v26=toMetrics(aggSites(SITE_MONTHLY,curMonths,sites,periodKeys26));
+    v25=toMetrics(aggSites(SITE_MONTHLY_2025,curMonths,sites,periodKeys25));
+    const prevSM=usePrevYear?SITE_MONTHLY_2025:SITE_MONTHLY;
+    vp=prevMonths.length?toMetrics(aggSites(prevSM,prevMonths,sites,null)):null;
+    const grpShort=GRP_LABEL_SHORT[grp];
+    const grpPrevLbl=GRP_PREV_LABEL[grp];
+    const mLbl=curMonths.map(m=>MNAME[m]||m).join('–');
+    const hasPartial=curMonths.some(m=>PERIOD_CONFIG&&PERIOD_CONFIG.partial_months.includes(m));
+    curLabel=`${grpShort} 26${hasPartial?' *':''}`;
+    prevLabel=grpPrevLbl;
+    yoyLabel=`${grpShort} 25`;
+    titleLabel=`${grpShort} 2026 (${mLbl}${hasPartial?' *':''})`;
+    subtitleText=`${grpShort} 2026 vs ${grpPrevLbl} (QoQ) & ${grpShort} 2025 (YoY)${hasPartial?' · *parsial apple-to-apple':''}`;
+    momSubText=`${grpPrevLbl} vs ${grpShort} 2026 (QoQ)`;
+    yoySubText=`${grpShort} 2025 vs ${grpShort} 2026 (YoY)`;
+  } else {
+    const m=_insightMonth;
+    const prevMap={January:null,February:'January',March:'February',April:'March',May:'April',June:'May',July:'June',August:'July',September:'August',October:'September',November:'October',December:'November'};
+    const prev=prevMap[m];
+    const mn=MNAME[m]||m,pmn=prev?(MNAME[prev]||prev):'—';
+    const curIsPartial=PERIOD_CONFIG&&PERIOD_CONFIG.partial_months.includes(m);
+    const curKey=curIsPartial?'period':null;
+    const prevKey=curIsPartial?'mom_period':null;
+    const yoyKey=curIsPartial?'yoy_period':null;
+    v26=toMetrics(aggSites(SITE_MONTHLY,[m],sites,[curKey]));
+    v25=toMetrics(aggSites(SITE_MONTHLY_2025,[m],sites,[yoyKey]));
+    vp=prev?toMetrics(aggSites(SITE_MONTHLY,[prev],sites,[prevKey])):null;
+    const cutD=curIsPartial&&PERIOD_CONFIG.cutoff?.[m]?PERIOD_CONFIG.cutoff[m]:null;
+    curLabel=mn+' 26';prevLabel=pmn?pmn+' 26':'—';yoyLabel=mn+' 25';titleLabel=`${mn} 2026`;
+    subtitleText=`${mn} 2026 vs ${pmn} 2026 (MoM)${cutD?` (1-${cutD} ${mn}, apple-to-apple)`:''} & ${mn} 2025 (YoY)`;
+    momSubText=`${pmn} 2026 vs ${mn} 2026`;
+    yoySubText=`${mn} 2025 vs ${mn} 2026`;
+  }
+  // Update labels
+  const sub=document.getElementById('insightSubtitle');if(sub)sub.textContent=subtitleText;
+  const momSub=document.getElementById('insightMoMSub');if(momSub)momSub.textContent=momSubText;
+  const ys=document.getElementById('insightYoYSub');if(ys)ys.textContent=yoySubText;
+  const rt=document.getElementById('insightRawTitle');if(rt)rt.textContent=`Tabel Perbandingan — ${titleLabel}`;
+  const tp=document.getElementById('th-prev');if(tp)tp.textContent=prevLabel;
+  const tc=document.getElementById('th-cur');if(tc)tc.textContent=curLabel;
+  const ty=document.getElementById('th-yoy');if(ty)ty.textContent=yoyLabel;
   const tbody=document.getElementById('insightRawBody');
   if(tbody)tbody.innerHTML=INSIGHT_METRICS.map((met,i)=>{
     const c=v26[met.key]||0,p=vp?vp[met.key]||0:null,y=v25[met.key]||0;
