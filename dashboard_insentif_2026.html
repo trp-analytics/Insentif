@@ -430,7 +430,7 @@ tr.total-row td{background:#f0f5fb;font-weight:600;border-top:2px solid #c2d0e5}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:13px">
         <div class="ccard">
-          <div class="ctitle">Perbandingan Efisiensi MoM</div>
+          <div class="ctitle" id="insightMoMTitle">Perbandingan Efisiensi MoM</div>
           <div class="csub" id="insightMoMSub"></div>
           <div id="insightMoMCards"></div>
           <div id="insightMoMConclusion" style="margin-top:10px;padding:8px 10px;border-radius:7px;font-size:11px;font-weight:600"></div>
@@ -1766,6 +1766,7 @@ function renderInsight(){
   // Update labels
   const sub=document.getElementById('insightSubtitle');if(sub)sub.textContent=subtitleText;
   const momSub=document.getElementById('insightMoMSub');if(momSub)momSub.textContent=momSubText;
+  const momTitle=document.getElementById('insightMoMTitle');if(momTitle)momTitle.textContent=isGroup?'Perbandingan Efisiensi QoQ':'Perbandingan Efisiensi MoM';
   const ys=document.getElementById('insightYoYSub');if(ys)ys.textContent=yoySubText;
   const rt=document.getElementById('insightRawTitle');if(rt)rt.textContent=`Tabel Perbandingan — ${titleLabel}`;
   const tp=document.getElementById('th-prev');if(tp)tp.textContent=prevLabel;
