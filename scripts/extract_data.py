@@ -25,6 +25,12 @@ SITES_26 = [
 ]
 SITES_25 = ['JBBK','CKP','SDA']
 
+# 2025: extract semua bulan yang tersedia termasuk Q4
+MONTHS_2025 = [
+    'January','February','March','April','May','June',
+    'July','August','September','October','November','December'
+]
+
 MONTH_ORDER = [
     'January','February','March','April','May','June',
     'July','August','September','October','November','December'
@@ -397,9 +403,9 @@ def main():
     mpp_raw_25 = {}
     for i, site in enumerate(SITES_26):  # ekstrak semua site dari 2025
         try:
-            extract_sheet(wb25.worksheet(site), site, months, sm25, mpp_raw_25,
+            extract_sheet(wb25.worksheet(site), site, MONTHS_2025, sm25, mpp_raw_25,
                          partial_months=partial_months, is_2025=True)
-            if i < len(SITES_26)-1: time.sleep(2)  # hindari quota exceeded
+            if i < len(SITES_26)-1: time.sleep(2)
         except gspread.exceptions.WorksheetNotFound:
             print(f'  [MISS] {site}')
 
