@@ -411,7 +411,7 @@ def main():
     for i, site in enumerate(SITES_26):
         try:
             extract_sheet(wb26.worksheet(site), site, months, sm26, mpp_raw)
-            if i < len(SITES_26)-1: time.sleep(2)  # hindari quota exceeded
+            if i < len(SITES_26)-1: time.sleep(10)  # hindari quota exceeded
         except gspread.exceptions.WorksheetNotFound:
             print(f'  [MISS] {site}')
 
@@ -422,7 +422,7 @@ def main():
         try:
             extract_sheet(wb25.worksheet(tab_name), site, MONTHS_2025, sm25, mpp_raw_25,
                          partial_months=partial_months, is_2025=True)
-            if i < len(SITES_26)-1: time.sleep(2)
+            if i < len(SITES_26)-1: time.sleep(10)  # hindari quota exceeded
         except gspread.exceptions.WorksheetNotFound:
             print(f'  [MISS] {site} (tab: {tab_name})')
 
