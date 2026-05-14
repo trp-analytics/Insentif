@@ -103,7 +103,7 @@ def detect_months_and_partial(wb, sites):
                     # Coba extract hari dari kolom tanggal
                     if ci_date >= 0 and ci_date < len(row):
                         raw = str(row[ci_date]).strip()
-                        for fmt in ('%d/%m/%Y','%Y-%m-%d','%d-%m-%Y','%m/%d/%Y'):
+                        for fmt in ('%m/%d/%Y','%d/%m/%Y','%Y-%m-%d','%d-%m-%Y'):
                             try:
                                 d = datetime.strptime(raw, fmt)
                                 month_maxday[m] = max(month_maxday[m], d.day)
@@ -175,7 +175,7 @@ def extract_sheet(ws, site, months, sm, mpp_raw, partial_months=None, is_2025=Fa
     Kalau is_2025=True dan partial_months ada, generate sub-key .yoy_period
     berisi data dengan cutoff hari yang sama (untuk YoY apple-to-apple).
     """
-    DATE_FMTS = ['%d/%m/%Y','%Y-%m-%d','%d-%m-%Y','%m/%d/%Y']
+    DATE_FMTS = ['%m/%d/%Y','%d/%m/%Y','%Y-%m-%d','%d-%m-%Y']
     DATE_COLS  = ['Tanggal','tanggal','Date','date','Tgl','tgl','Transaction Date']
 
     all_rows = ws.get_all_values()
