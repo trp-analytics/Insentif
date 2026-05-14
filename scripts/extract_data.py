@@ -229,6 +229,16 @@ def extract_sheet(ws, site, months, sm, mpp_raw, partial_months=None, is_2025=Fa
                     row_day = datetime.strptime(raw_date, fmt).day
                     break
                 except: pass
+            # Fallback: Excel serial number (e.g. 45823)
+            if row_day is None:
+                try:
+                    serial = int(float(raw_date))
+                    if serial > 40000:  # sanity check: valid Excel date range
+                        from datetime import date as _date
+                        excel_epoch = _date(1899, 12, 30)
+                        d = _date.fromordinal(excel_epoch.toordinal() + serial)
+                        row_day = d.day
+                except: pass
 
         monthly[m]['trips'] += 1
         monthly[m]['do_']   += to_num(g(ci['do']))
@@ -290,7 +300,12 @@ def extract_sheet(ws, site, months, sm, mpp_raw, partial_months=None, is_2025=Fa
     if is_2025 and yoy_partial:
         print(f'    [yoy_period] {site}: {dict({m: yoy_partial[m]["trips"] for m in yoy_partial})}')
     elif is_2025 and partial_months:
-        print(f'    [yoy_period] {site}: EMPTY — date_col={ci["date"]}, partial_months={partial_months}')
+        # Sample first few date values for debug
+        sample_dates = []
+        for row in all_rows[1:6]:
+            if ci['date'] >= 0 and ci['date'] < len(row):
+                sample_dates.append(str(row[ci['date']]))
+        print(f'    [yoy_period] {site}: EMPTY — date_col={ci["date"]}, sample_dates={sample_dates}')
 
     # Inject yoy_period sub-key ke sm[site][month] (2025)
     for m, d in yoy_partial.items():
