@@ -120,17 +120,22 @@ def detect_months_and_partial(wb, sites):
     months = sorted(month_set, key=lambda m: MONTH_ORDER.index(m))
 
     # Tentukan partial months:
-    # Bulan dianggap partial kalau == bulan sekarang di tahun ini
     partial_months = {}
     last_month = months[-1]
     if last_month == current_month:
-        # Cutoff = max day yang ada di data, atau hari ini kalau tidak ada kolom tanggal
         cutoff = month_maxday.get(last_month, current_day)
         partial_months[last_month] = cutoff
 
+    # Tanggal data terakhir dari max tanggal di bulan terakhir
+    last_month_idx = MONTH_ORDER.index(last_month) + 1
+    last_day = month_maxday.get(last_month, 1)
+    MONTH_ID = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des']
+    last_data_date = f"{last_day} {MONTH_ID[last_month_idx]} {today.year}"
+
     print(f'\n📅 Auto-detect: MONTHS={months}')
     print(f'📅 PARTIAL_MONTHS={partial_months}')
-    return months, partial_months
+    print(f'📅 Last data date: {last_data_date}')
+    return months, partial_months, last_data_date
 
 
 # ── Auth ─────────────────────────────────────────────────────────────────────
@@ -346,20 +351,17 @@ def replace_section(html, const_name, new_js, next_const):
 def jd(obj):
     return json.dumps(obj, separators=(',',':'), ensure_ascii=False)
 
-def update_html(sm26, sm25, all_mpp, top20, insight, months, partial_months):
+def update_html(sm26, sm25, all_mpp, top20, insight, months, partial_months, last_data_date):
     with open(HTML_PATH, 'r', encoding='utf-8') as f:
         html = f.read()
 
-    # Auto-generate tanggal update
+    # Update chip tanggal pakai tanggal data terakhir (bukan tanggal run)
+    html = re.sub(r'Update: \d+ \w+ \d{4}', f'Update: {last_data_date}', html)
+
+    # Update MTD chip
     wib = timezone(timedelta(hours=7))
     now = datetime.now(wib)
     MONTH_ID = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des']
-    tgl_update = f"{now.day} {MONTH_ID[now.month]} {now.year}"
-
-    # Update chip tanggal di HTML
-    html = re.sub(r'Update: \d+ \w+ \d{4}', f'Update: {tgl_update}', html)
-
-    # Update MTD chip di setView()
     last_m = months[-1]
     last_cutoff = partial_months.get(last_m)
     if last_cutoff:
@@ -419,7 +421,7 @@ def main():
     wb25 = gc.open_by_key(os.environ['SHEET_ID_2025'])
 
     # Auto-detect months dari sheet 2026
-    months, partial_months = detect_months_and_partial(wb26, SITES_26)
+    months, partial_months, last_data_date = detect_months_and_partial(wb26, SITES_26)
 
     sm26 = {s:{} for s in SITES_26}
     sm25 = {s:{} for s in SITES_26}  # semua site, bukan cuma NDC
@@ -452,7 +454,7 @@ def main():
     verify(sm26)
 
     print('\n✏️  Updating HTML...')
-    update_html(sm26, sm25, all_mpp, top20, insight, months, partial_months)
+    update_html(sm26, sm25, all_mpp, top20, insight, months, partial_months, last_data_date)
 
 if __name__ == '__main__':
     main()
