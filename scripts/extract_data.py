@@ -350,6 +350,24 @@ def update_html(sm26, sm25, all_mpp, top20, insight, months, partial_months):
     with open(HTML_PATH, 'r', encoding='utf-8') as f:
         html = f.read()
 
+    # Auto-generate tanggal update
+    wib = timezone(timedelta(hours=7))
+    now = datetime.now(wib)
+    MONTH_ID = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des']
+    tgl_update = f"{now.day} {MONTH_ID[now.month]} {now.year}"
+
+    # Update chip tanggal di HTML
+    html = re.sub(r'Update: \d+ \w+ \d{4}', f'Update: {tgl_update}', html)
+
+    # Update MTD chip di setView()
+    last_m = months[-1]
+    last_cutoff = partial_months.get(last_m)
+    if last_cutoff:
+        MONTH_EN_TO_IDX = {m:i for i,m in enumerate(['','January','February','March','April','May','June','July','August','September','October','November','December'])}
+        m_idx = MONTH_EN_TO_IDX.get(last_m, 0)
+        mtd_text = f'MTD s/d {last_cutoff} {MONTH_ID[m_idx]} {now.year}'
+        html = re.sub(r'MTD s/d \d+ \w+ \d{4}', mtd_text, html)
+
     # Update MONTHS
     html = re.sub(r'const MONTHS=\[[^\]]+\]', f'const MONTHS={jd(months)}', html)
 
