@@ -288,7 +288,7 @@ tr.total-row td{background:#f0f5fb;font-weight:600;border-top:2px solid #c2d0e5}
       </select>
       <div class="chip site" id="siteChip">Semua Site</div>
       <div class="chip time" id="clkChip">--:--</div>
-      <div class="chip" id="updChip">Update: 14 Mei 2026</div>
+      <div class="chip" id="updChip">Update: 5 Mei 2026</div>
       <button class="rbtn" onclick="renderAll()">↻ Refresh</button>
     </div>
   </div>
@@ -742,7 +742,7 @@ function setView(v,btn){
   } else {
     sel.disabled=false;
     sel.style.opacity='1';
-    if(upd)upd.textContent='Update: 14 Mei 2026';
+    if(upd)upd.textContent='Update: 5 Mei 2026';
   }
   renderAll();
   setTimeout(()=>{if(_map&&CURRENT_PAGE==='overview')_renderMap();},100);
