@@ -201,6 +201,8 @@ def extract_sheet(ws, site, months, sm, mpp_raw, partial_months=None, is_2025=Fa
 
     monthly     = defaultdict(empty_month)
     yoy_partial = defaultdict(empty_month)  # untuk YoY apple-to-apple di 2025
+    period_partial     = defaultdict(empty_month)  # .period untuk bulan parsial 2026
+    mom_period_partial = defaultdict(empty_month)  # .mom_period untuk prev bulan 2026
     mpp_month   = defaultdict(lambda: defaultdict(float))
     mpp_info    = {}
 
@@ -234,6 +236,31 @@ def extract_sheet(ws, site, months, sm, mpp_raw, partial_months=None, is_2025=Fa
         monthly[m]['ujp']   += to_num(g(ci['ujp']))
         monthly[m]['ins']   += to_num(g(ci['ins']))
 
+        # Accumulate period sub-keys untuk 2026 (apple-to-apple MoM & YoY)
+        if not is_2025 and partial_months:
+            # .period — bulan parsial itu sendiri (Mei 1-12)
+            if m in partial_months:
+                cutoff = partial_months[m]
+                if row_day is not None and row_day <= cutoff:
+                    period_partial[m]['trips'] += 1
+                    period_partial[m]['do_']   += to_num(g(ci['do']))
+                    period_partial[m]['dp']    += to_num(g(ci['dp']))
+                    period_partial[m]['ujp']   += to_num(g(ci['ujp']))
+                    period_partial[m]['ins']   += to_num(g(ci['ins']))
+            # .mom_period — bulan sebelum parsial (April 1-12)
+            MONTH_ORDER_LOCAL = ['January','February','March','April','May','June',
+                'July','August','September','October','November','December']
+            for partial_m, cutoff in partial_months.items():
+                idx = MONTH_ORDER_LOCAL.index(partial_m) if partial_m in MONTH_ORDER_LOCAL else -1
+                if idx > 0:
+                    prev_m = MONTH_ORDER_LOCAL[idx-1]
+                    if m == prev_m and row_day is not None and row_day <= cutoff:
+                        mom_period_partial[m]['trips'] += 1
+                        mom_period_partial[m]['do_']   += to_num(g(ci['do']))
+                        mom_period_partial[m]['dp']    += to_num(g(ci['dp']))
+                        mom_period_partial[m]['ujp']   += to_num(g(ci['ujp']))
+                        mom_period_partial[m]['ins']   += to_num(g(ci['ins']))
+
         # Accumulate yoy_period — filter by cutoff day (sama dengan 2026 partial)
         if is_2025 and partial_months and m in partial_months:
             cutoff = partial_months[m]
@@ -259,10 +286,18 @@ def extract_sheet(ws, site, months, sm, mpp_raw, partial_months=None, is_2025=Fa
 
     sm[site] = {m: dict(v) for m, v in monthly.items()}
 
-    # Inject yoy_period sub-key ke sm[site][month]
+    # Inject yoy_period sub-key ke sm[site][month] (2025)
     for m, d in yoy_partial.items():
         if m in sm[site]:
             sm[site][m]['yoy_period'] = dict(d)
+
+    # Inject period + mom_period sub-key ke sm[site][month] (2026)
+    for m, d in period_partial.items():
+        if m in sm[site]:
+            sm[site][m]['period'] = dict(d)
+    for m, d in mom_period_partial.items():
+        if m in sm[site]:
+            sm[site][m]['mom_period'] = dict(d)
 
     for nik, info in mpp_info.items():
         if nik not in mpp_raw:
