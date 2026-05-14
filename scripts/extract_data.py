@@ -286,6 +286,12 @@ def extract_sheet(ws, site, months, sm, mpp_raw, partial_months=None, is_2025=Fa
 
     sm[site] = {m: dict(v) for m, v in monthly.items()}
 
+    # Debug: print yoy_partial counts
+    if is_2025 and yoy_partial:
+        print(f'    [yoy_period] {site}: {dict({m: yoy_partial[m]["trips"] for m in yoy_partial})}')
+    elif is_2025 and partial_months:
+        print(f'    [yoy_period] {site}: EMPTY — date_col={ci["date"]}, partial_months={partial_months}')
+
     # Inject yoy_period sub-key ke sm[site][month] (2025)
     for m, d in yoy_partial.items():
         if m in sm[site]:
