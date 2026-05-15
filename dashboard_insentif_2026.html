@@ -863,7 +863,7 @@ function renderDistTable(){
       if(ins<=0) return;
       const cat=ins>1500000?'High':ins>=500000?'Mid':'Low';
       if(DIST_CAT!=='all'&&cat!==DIST_CAT) return;
-      rows.push({nik:r.nik,name:r.name,site:r.site,month:m,ins,cat,total:r.total});
+      rows.push({nik:r.nik,name:r.name,site:r.site,role:r.role||'Driver',month:m,ins,cat,total:r.total});
     });
   });
   rows.sort((a,b)=>{
@@ -905,7 +905,8 @@ function renderDistTable(){
     const topEntry=TOP_MPP.find(t=>t.name===r.name&&t.site===r.site);
     const isTop20=!!topEntry;
     const nameCell=isTop20?`<span style="font-weight:600">${r.name}</span> <span style="font-size:9px;padding:1px 5px;background:#023188;color:#fff;border-radius:8px">TOP20</span>`:r.name;
-    return`<tr><td style="color:#94a3b8;font-size:11px">${st+i+1}</td><td style="font-weight:500">${nameCell}</td><td></td><td>${siteBadge}</td><td style="font-size:11px;color:#5a7090">${MNAME_FULL[r.month]||r.month}</td><td>${catBadge}</td><td class="r" style="font-weight:600">Rp ${r.ins.toLocaleString('id-ID')}</td><td class="r" style="color:#023188;font-weight:600">${ytd?'Rp '+Math.round(ytd/1e6)+' Jt':'—'}</td></tr>`;
+    const roleBadge=r.role==='Kenek'?'<span class="bdgk">Kenek</span>':'<span class="bdgr">Driver</span>';
+    return`<tr><td style="color:#94a3b8;font-size:11px">${st+i+1}</td><td style="font-weight:500">${nameCell}</td><td>${roleBadge}</td><td>${siteBadge}</td><td style="font-size:11px;color:#5a7090">${MNAME_FULL[r.month]||r.month}</td><td>${catBadge}</td><td class="r" style="font-weight:600">Rp ${r.ins.toLocaleString('id-ID')}</td><td class="r" style="color:#023188;font-weight:600">${ytd?'Rp '+Math.round(ytd/1e6)+' Jt':'—'}</td></tr>`;
   }).join('');
   document.getElementById('distPI').textContent=`${st+1}–${en} dari ${total} MPP`;
   const pp=[];for(let p=Math.max(1,DIST_PAGE-2);p<=Math.min(tp,DIST_PAGE+2);p++)pp.push(p);
