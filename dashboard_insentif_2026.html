@@ -1066,8 +1066,8 @@ function _buildPopup(sk){
          ['DP',       s.dp.toLocaleString('id-ID'),    s25.dp,       true,  s.dp],
          ['DO/Trip',  s.do_trip,                       doTrip25,     true,  s.do_trip],
          ['DP/Trip',  s.dp_trip,                       dpTrip25,     true,  s.dp_trip],
-         ['UJP/Trip', 'Rp '+_fv(s.ujp_trip),          ujpTrip25,    false, s.ujp_trip],
-         ['Insentif', 'Rp '+_fv(s.ins),               s25.ins,      false, s.ins]
+         ['UJP/Trip', _fv(s.ujp_trip),          ujpTrip25,    false, s.ujp_trip],
+         ['Insentif', _fv(s.ins),               s25.ins,      false, s.ins]
         ].map(([l,v,p25,hb,raw])=>`
       <div style="display:flex;justify-content:space-between;align-items:center;padding:3.5px 0;border-bottom:1px solid #f4f7fb;font-size:12px">
         <span style="color:#7a94b0;min-width:70px">${l}</span>
@@ -1163,7 +1163,7 @@ function _drawMap(){
     svg.appendChild(el('circle',{cx:dx,cy:dy,r:'11',fill:col,opacity:'0.15'}));
     // Label div (HTML, not SVG — reliable click)
     const div=document.createElement('div');
-    const ins='Rp '+_fv(s.ins);
+    const ins=_fv(s.ins);
     const label=c.name.replace('Hub ','');
     div.style.cssText=`position:absolute;left:${lx}px;top:${ly+46}px;width:${LW}px;height:${LH}px;background:${col};border-radius:5px;cursor:pointer;z-index:500;display:flex;flex-direction:column;justify-content:center;padding:0 7px;box-sizing:border-box;opacity:0.93`;
     div.innerHTML=`<div style="font-size:10.5px;font-weight:700;color:#fff;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${label}</div><div style="font-size:9px;color:rgba(255,255,255,.88);line-height:1.2">${ins}</div>`;
@@ -1243,8 +1243,8 @@ function _popup(sk){
          ['DP',s.dp.toLocaleString('id-ID'),s25.dp,true,s.dp],
          ['DO/Trip',s.do_trip,doTrip25,true,s.do_trip],
          ['DP/Trip',s.dp_trip,dpTrip25,true,s.dp_trip],
-         ['UJP/Trip','Rp '+_fv(s.ujp_trip),ujpTrip25,false,s.ujp_trip],
-         ['Insentif','Rp '+_fv(s.ins),s25.ins,false,s.ins]
+         ['UJP/Trip',_fv(s.ujp_trip),ujpTrip25,false,s.ujp_trip],
+         ['Insentif',_fv(s.ins),s25.ins,false,s.ins]
         ].map(([l,v,p,h,raw])=>`
       <div style="display:flex;justify-content:space-between;align-items:center;padding:3.5px 0;border-bottom:1px solid #f4f7fb;font-size:12px">
         <span style="color:#7a94b0">${l}</span>
@@ -1342,7 +1342,7 @@ function _drawLines(sites){
     svg.appendChild(svgEl('circle',{cx:dx,cy:dy,r:'10',fill:col,opacity:'0.18'}));
 
     // Label as HTML div
-    const ins='Rp '+_fv(s.ins);
+    const ins=_fv(s.ins);
     const label=c.name.replace('Hub ','');
     const div=document.createElement('div');
     div.style.cssText=`position:absolute;left:${lx}px;top:${ly}px;width:${LW}px;height:${LH}px;background:${col};border-radius:5px;cursor:pointer;z-index:500;display:flex;flex-direction:column;justify-content:center;padding:0 7px;box-sizing:border-box;user-select:none`;
