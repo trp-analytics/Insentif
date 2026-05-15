@@ -285,14 +285,14 @@ def extract_sheet(ws, site, months, sm, mpp_raw, partial_months=None, is_2025=Fa
         ins_mpp = to_num(g(ci['insmpp']))
         if ins_mpp <= 0: continue
 
-        for nik_ci, name_ci in [(ci['nik1'], ci['driver']), (ci['nik2'], ci['kenek'])]:
+        for nik_ci, name_ci, role in [(ci['nik1'], ci['driver'], 'Driver'), (ci['nik2'], ci['kenek'], 'Kenek')]:
             nik  = str(g(nik_ci)).strip()
             name = str(g(name_ci)).strip()
             if not nik or nik in ('None','999999',''): continue
             if 'DUMMY' in name.upper(): continue
             mpp_month[nik][m] += ins_mpp
             if nik not in mpp_info:
-                mpp_info[nik] = {'name': name, 'site': site}
+                mpp_info[nik] = {'name': name, 'site': site, 'role': role}
 
     sm[site] = {m: dict(v) for m, v in monthly.items()}
 
@@ -322,7 +322,7 @@ def extract_sheet(ws, site, months, sm, mpp_raw, partial_months=None, is_2025=Fa
 
     for nik, info in mpp_info.items():
         if nik not in mpp_raw:
-            mpp_raw[nik] = {'name': info['name'], 'site': site, 'months': {}}
+            mpp_raw[nik] = {'name': info['name'], 'site': site, 'role': info.get('role','Driver'), 'months': {}}
         for mo, ins in mpp_month[nik].items():
             mpp_raw[nik]['months'][mo] = mpp_raw[nik]['months'].get(mo, 0) + ins
 
@@ -343,7 +343,8 @@ def build_mpp_tables(mpp_raw, months):
     all_mpp = []
     for nik, d in mpp_raw.items():
         total = sum(d['months'].values())
-        row = {'nik': nik, 'name': d['name'], 'site': d['site'], 'total': total}
+        row = {'nik': nik, 'name': d['name'], 'site': d['site'],
+               'role': d.get('role','Driver'), 'total': total}
         for m in months:
             row[m[:3].lower()] = d['months'].get(m, 0)
         all_mpp.append(row)
